@@ -1,0 +1,32 @@
+html,
+body {
+  overflow: hidden;
+  overflow: -moz-scrollbars-none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  overscroll-behavior-x: none;
+}
+
+#root {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  outline: none;
+  z-index: 1;
+}
+
+canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  outline: none;
+  z-index: 1;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}

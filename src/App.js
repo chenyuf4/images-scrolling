@@ -1,25 +1,45 @@
-import logo from './logo.svg';
-import './App.css';
+import { Canvas } from "@react-three/fiber";
+import "./App.scss";
+import { Suspense } from "react";
+import { PerspectiveCamera } from "@react-three/drei";
+import Scene from "features/Scene/Scene";
+import { useRef } from "react";
+const App = () => {
+  const scrollPosRef = useRef({
+    current: 0,
+    target: 0,
+  });
+  const canvasSizeRef = useRef({
+    width: 0,
+    height: 0,
+  });
 
-function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Canvas
+      dpr={Math.max(window.devicePixelRatio, 2)}
+      linear={true}
+      flat={true}
+      gl={{ antialias: true, alpha: true }}
+      onCreated={(state) => {
+        const { viewport } = state;
+        const { width, height } = viewport;
+        canvasSizeRef.current.width = width;
+        canvasSizeRef.current.height = height;
+      }}
+    >
+      <Suspense fallback={null}>
+        <PerspectiveCamera
+          makeDefault
+          position={[0, 0, 5]}
+          near={0.1}
+          far={100}
+          fov={75}
+        />
+        <color attach="background" args={["#141414"]} />
+        <Scene scrollPosRef={scrollPosRef} />
+      </Suspense>
+    </Canvas>
   );
-}
+};
 
 export default App;
