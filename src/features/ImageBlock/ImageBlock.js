@@ -3,20 +3,22 @@ import { getDefaultImageDimension } from "utils/utilFn";
 import { useTexture } from "@react-three/drei";
 import "./ImageShaderMaterial";
 import { DEFAULT_IMAGE_SCALE, IMAGE_DIMENSION, IMAGES_ARR } from "utils/format";
-const ImageBlock = ({ url, index }) => {
+const ImageBlock = ({ url, index, imagesRef }) => {
   const { viewport } = useThree();
   const [imgTexture] = useTexture([url]);
   const { width } = viewport;
   const {
     width: defaultWidth,
     height: defaultHeight,
-    gap: defaultGap
+    gap: defaultGap,
   } = getDefaultImageDimension(width);
   const numImages = IMAGES_ARR.length;
+  const onClickHandler = () => {};
   return (
     <mesh
       position={[index * (defaultWidth + defaultGap), 0, 0]}
       scale={[defaultWidth, defaultHeight, 1]}
+      onClick={onClickHandler}
     >
       <planeBufferGeometry args={[1, 1, 128, 128]} />
       <imageShaderMaterial
@@ -26,7 +28,7 @@ const ImageBlock = ({ url, index }) => {
           (defaultHeight / defaultWidth) *
             (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
             (1 / DEFAULT_IMAGE_SCALE),
-          1 / DEFAULT_IMAGE_SCALE
+          1 / DEFAULT_IMAGE_SCALE,
         ]}
         offset={[
           ((0.5 -
@@ -36,7 +38,7 @@ const ImageBlock = ({ url, index }) => {
                 (1 / DEFAULT_IMAGE_SCALE))) *
             index) /
             (numImages - 1),
-          0
+          0,
         ]}
       />
     </mesh>

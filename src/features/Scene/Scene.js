@@ -103,7 +103,7 @@ const Scene = ({ scrollPosRef }) => {
   return (
     <group ref={imagesRef}>
       {IMAGES_ARR.map((url, index) => (
-        <ImageBlock url={url} key={index} index={index} />
+        <ImageBlock url={url} key={index} index={index} imagesRef={imagesRef} />
       ))}
     </group>
   );
