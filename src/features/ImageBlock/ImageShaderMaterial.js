@@ -22,19 +22,16 @@ class ImageShaderMaterial extends ShaderMaterial {
       }`,
       uniforms: {
         tex: { value: null },
-        planeDimension: {
-          value: [1, 1]
-        },
         index: {
-          value: 0
+          value: 0,
         },
         dimension: {
-          value: [1, 1]
+          value: [1, 1],
         },
         offset: {
-          value: [0, 0]
-        }
-      }
+          value: [0, 0],
+        },
+      },
     });
   }
 
@@ -44,14 +41,6 @@ class ImageShaderMaterial extends ShaderMaterial {
 
   get tex() {
     return this.uniforms.tex.value;
-  }
-
-  get planeDimension() {
-    return this.uniforms.planeDimension.value;
-  }
-
-  set planeDimension(value) {
-    this.uniforms.planeDimension.value = value;
   }
 
   get index() {
@@ -74,8 +63,9 @@ class ImageShaderMaterial extends ShaderMaterial {
     return this.uniforms.offset.value;
   }
 
-  set offset(value) {
-    this.uniforms.offset.value = value;
+  set offset(val) {
+    this.uniforms.offset.value[0] = val[0];
+    this.uniforms.offset.value[1] = val[1];
   }
 }
 

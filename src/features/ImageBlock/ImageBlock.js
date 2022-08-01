@@ -1,21 +1,154 @@
 import { useThree } from "@react-three/fiber";
-import { getDefaultImageDimension } from "utils/utilFn";
+import {
+  getDefaultImageDimension,
+  getSmallImageDimension,
+  getImageOffsetLimit,
+  getDefaultScrollLimit,
+} from "utils/utilFn";
 import { useTexture } from "@react-three/drei";
 import "./ImageShaderMaterial";
-import { DEFAULT_IMAGE_SCALE, IMAGE_DIMENSION, IMAGES_ARR } from "utils/format";
-const ImageBlock = ({ url, index, imagesRef }) => {
+import { useRef } from "react";
+import {
+  DEFAULT_IMAGE_SCALE,
+  IMAGE_DIMENSION,
+  IMAGES_ARR,
+  SMALL_IMAGES_PADDING,
+} from "utils/format";
+
+const ImageBlock = ({
+  url,
+  index,
+  imagesRef,
+  tlRef,
+  modeRef,
+  scrollPosRef,
+}) => {
   const { viewport } = useThree();
   const [imgTexture] = useTexture([url]);
-  const { width } = viewport;
+  const { width, height } = viewport;
   const {
     width: defaultWidth,
     height: defaultHeight,
     gap: defaultGap,
   } = getDefaultImageDimension(width);
+
+  const {
+    width: smallWidth,
+    height: smallHeight,
+    gap: smallGap,
+  } = getSmallImageDimension(width);
+
   const numImages = IMAGES_ARR.length;
-  const onClickHandler = () => {};
+  const meshRef = useRef();
+  const imageOffsetLimit = getImageOffsetLimit(width);
+  const scrollLimit = getDefaultScrollLimit(width);
+  const defaultImageOffset = (imageOffsetLimit * index) / (numImages - 1);
+  const defaultPosX = index * (defaultWidth + defaultGap);
+
+  // (defaultHeight, 1 / 0.8)
+  // (height: 1)
+  // may have some potential bug, notice that default Height may need to be changed if recovering from small to big
+  const correctShaderDimensionFn = (h, targetHeight) => {
+    const a = (1 - 1 / DEFAULT_IMAGE_SCALE) / (targetHeight - defaultHeight);
+    const b = 1 - a * targetHeight;
+    return a * h + b;
+  };
+
+  const correctMainShaderOffsetFn = (x) => {
+    const scrollPercentage = Math.abs(x - defaultPosX) / scrollLimit;
+    return defaultImageOffset - scrollPercentage * imageOffsetLimit;
+  };
+
+  const updateMainImage = (tl) => {
+    tl.to(
+      meshRef.current.position,
+      {
+        x: 0,
+        y: 0,
+        z: 0,
+        onUpdate: function () {
+          const { x } = this.targets()[0];
+          meshRef.current.material.uniforms.offset.value = [
+            correctMainShaderOffsetFn(x),
+            0,
+          ];
+        },
+      },
+      "start"
+    ).to(
+      meshRef.current.scale,
+      {
+        x: width,
+        y: height,
+        onUpdate: function () {
+          const { x, y } = this.targets()[0];
+          const correctScaleRatio = correctShaderDimensionFn(y, height);
+          meshRef.current.material.uniforms.dimension.value = [
+            (y / x) *
+              (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+              correctScaleRatio,
+            correctScaleRatio,
+          ];
+        },
+      },
+      "start"
+    );
+  };
+
+  const updateSideImages = (tl, imgMesh, imgIndex) => {
+    const defaultSmallPosX =
+      width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING;
+    const defaultSmallPosY =
+      -(height / 2) + SMALL_IMAGES_PADDING + smallHeight / 2;
+    tl.to(
+      imgMesh.position,
+      {
+        x: defaultSmallPosX + imgIndex * (smallWidth + smallGap),
+        y: defaultSmallPosY,
+        z: 0.001,
+      },
+      "start"
+    )
+      .to(imgMesh.material.uniforms.offset.value, [0, 0], "start")
+      .to(
+        imgMesh.scale,
+        {
+          x: smallWidth,
+          y: smallHeight,
+          onUpdate: function () {
+            const { x, y } = this.targets()[0];
+            const correctScaleRatio = correctShaderDimensionFn(y, smallHeight);
+            imgMesh.material.uniforms.dimension.value = [
+              (y / x) *
+                (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                correctScaleRatio,
+              correctScaleRatio,
+            ];
+          },
+        },
+        "start"
+      );
+  };
+  const onClickHandler = () => {
+    console.log(modeRef.current);
+    if (modeRef.current === "detail") return;
+    modeRef.current = "detail";
+    scrollPosRef.current.target = scrollPosRef.current.current;
+
+    const tl = tlRef.current;
+    tl.clear(); // be careful about this one
+    imagesRef.current.children.forEach((imgMesh, imgIndex) => {
+      if (index === imgIndex) {
+        updateMainImage(tl);
+      } else {
+        updateSideImages(tl, imgMesh, imgIndex);
+      }
+    });
+  };
+
   return (
     <mesh
+      ref={meshRef}
       position={[index * (defaultWidth + defaultGap), 0, 0]}
       scale={[defaultWidth, defaultHeight, 1]}
       onClick={onClickHandler}
