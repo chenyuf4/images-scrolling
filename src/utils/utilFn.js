@@ -2,7 +2,8 @@ import {
   DEFAULT_IMAGE_GAP_RATIO,
   DEFAULT_IMAGE_WIDTH_HEIGHT_RATIO,
   DEFAULT_IMAGE_WIDTH_RATIO,
-  DEFAULT_IMAGE_SCALE
+  DEFAULT_IMAGE_SCALE,
+  IMAGE_DIMENSION
 } from "./format";
 import { IMAGES_ARR } from "./format";
 
@@ -32,7 +33,7 @@ export const getImageOffsetLimit = (canvasWidth) => {
     0.5 -
     0.5 /
       ((defaultHeight / defaultWidth) *
-        (2200 / 1080) *
+        (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
         (1 / DEFAULT_IMAGE_SCALE))
   );
 };

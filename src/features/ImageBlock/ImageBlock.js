@@ -2,7 +2,7 @@ import { useThree } from "@react-three/fiber";
 import { getDefaultImageDimension } from "utils/utilFn";
 import { useTexture } from "@react-three/drei";
 import "./ImageShaderMaterial";
-import { DEFAULT_IMAGE_SCALE } from "utils/format";
+import { DEFAULT_IMAGE_SCALE, IMAGE_DIMENSION, IMAGES_ARR } from "utils/format";
 const ImageBlock = ({ url, index }) => {
   const { viewport } = useThree();
   const [imgTexture] = useTexture([url]);
@@ -12,6 +12,7 @@ const ImageBlock = ({ url, index }) => {
     height: defaultHeight,
     gap: defaultGap
   } = getDefaultImageDimension(width);
+  const numImages = IMAGES_ARR.length;
   return (
     <mesh
       position={[index * (defaultWidth + defaultGap), 0, 0]}
@@ -23,7 +24,7 @@ const ImageBlock = ({ url, index }) => {
         index={index}
         dimension={[
           (defaultHeight / defaultWidth) *
-            (2200 / 1080) *
+            (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
             (1 / DEFAULT_IMAGE_SCALE),
           1 / DEFAULT_IMAGE_SCALE
         ]}
@@ -31,10 +32,10 @@ const ImageBlock = ({ url, index }) => {
           ((0.5 -
             0.5 /
               ((defaultHeight / defaultWidth) *
-                (2200 / 1080) *
+                (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
                 (1 / DEFAULT_IMAGE_SCALE))) *
             index) /
-            7,
+            (numImages - 1),
           0
         ]}
       />
