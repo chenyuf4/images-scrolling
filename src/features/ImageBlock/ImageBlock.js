@@ -10,9 +10,8 @@ const ImageBlock = ({ url, index }) => {
   const {
     width: defaultWidth,
     height: defaultHeight,
-    gap: defaultGap,
+    gap: defaultGap
   } = getDefaultImageDimension(width);
-
   return (
     <mesh
       position={[index * (defaultWidth + defaultGap), 0, 0]}
@@ -26,7 +25,17 @@ const ImageBlock = ({ url, index }) => {
           (defaultHeight / defaultWidth) *
             (2200 / 1080) *
             (1 / DEFAULT_IMAGE_SCALE),
-          1 / DEFAULT_IMAGE_SCALE,
+          1 / DEFAULT_IMAGE_SCALE
+        ]}
+        offset={[
+          ((0.5 -
+            0.5 /
+              ((defaultHeight / defaultWidth) *
+                (2200 / 1080) *
+                (1 / DEFAULT_IMAGE_SCALE))) *
+            index) /
+            7,
+          0
         ]}
       />
     </mesh>

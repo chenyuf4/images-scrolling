@@ -2,7 +2,11 @@ import ImageBlock from "features/ImageBlock/ImageBlock";
 import { IMAGES_ARR } from "utils/format";
 import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
-import { getDefaultImageDimension, getDefaultScrollLimit } from "utils/utilFn";
+import {
+  getDefaultImageDimension,
+  getDefaultScrollLimit,
+  getImageOffsetLimit
+} from "utils/utilFn";
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
 
@@ -11,19 +15,29 @@ const Scene = ({ scrollPosRef }) => {
   const imagesRef = useRef();
   const { viewport, invalidate } = useThree();
   const { width } = viewport;
-
+  const imageOffsetLimit = getImageOffsetLimit(width);
+  const scrollLimit = getDefaultScrollLimit(width);
+  const numImages = IMAGES_ARR.length;
   const updatePlanes = useCallback(
     (deltaTimeValue) => {
       const { current, target } = scrollPosRef.current;
-      let newCurrentPos = current + (target - current) * 6 * deltaTimeValue;
+      let newCurrentPos = current + (target - current) * 5 * deltaTimeValue;
       if (Math.abs(newCurrentPos - target) <= 0.001) {
         newCurrentPos = target;
       }
-      const { width: defaultWidth, gap: defaultGap } =
-        getDefaultImageDimension(width);
+      const { width: defaultWidth, gap: defaultGap } = getDefaultImageDimension(
+        width
+      );
+      const scrollPercentage = Math.abs(current) / scrollLimit;
       imagesRef.current.children.forEach((item, index) => {
         const defaultPosition = index * (defaultWidth + defaultGap);
         item.position.x = defaultPosition + newCurrentPos;
+
+        const defaultImageOffset = (imageOffsetLimit * index) / (numImages - 1);
+        item.material.uniforms.offset.value = [
+          defaultImageOffset - scrollPercentage * imageOffsetLimit,
+          0
+        ];
       });
 
       scrollPosRef.current.current = newCurrentPos;
@@ -31,7 +45,7 @@ const Scene = ({ scrollPosRef }) => {
         invalidate();
       }
     },
-    [invalidate, scrollPosRef, width]
+    [invalidate, scrollPosRef, width, imageOffsetLimit, numImages, scrollLimit]
   );
 
   const onWheelHandler = useCallback(
@@ -68,7 +82,6 @@ const Scene = ({ scrollPosRef }) => {
       target = Math.max(-scrollLimit, Math.min(0, target));
       scrollPosRef.current.target = target;
       invalidate();
-      // animationRef.current = window.requestAnimationFrame(updatePlanes);
     },
     [invalidate, scrollPosRef, width]
   );

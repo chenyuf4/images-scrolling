@@ -12,7 +12,7 @@ class ImageShaderMaterial extends ShaderMaterial {
       uniform vec2 offset;
       void main() {
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position.x, position.y, 0.0, 1.0);
-        progress=(uv-.5) / dimension+.5 + offset;
+        progress=(uv-.5) / dimension + .5 + offset;
       }`,
       fragmentShader: `
       uniform sampler2D tex;
@@ -23,18 +23,18 @@ class ImageShaderMaterial extends ShaderMaterial {
       uniforms: {
         tex: { value: null },
         planeDimension: {
-          value: [1, 1],
+          value: [1, 1]
         },
         index: {
-          value: 0,
+          value: 0
         },
         dimension: {
-          value: [1, 1],
+          value: [1, 1]
         },
         offset: {
-          value: [0, 0],
-        },
-      },
+          value: [0, 0]
+        }
+      }
     });
   }
 
