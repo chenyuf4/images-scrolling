@@ -106,15 +106,24 @@ const ImageBlock = ({
         x: defaultSmallPosX + imgIndex * (smallWidth + smallGap),
         y: defaultSmallPosY,
         z: 0.001,
+        delay: (Math.abs(imgIndex - index) - 1) * 0.05,
       },
       "start"
     )
-      .to(imgMesh.material.uniforms.offset.value, [0, 0], "start")
+      .to(
+        imgMesh.material.uniforms.offset,
+        {
+          endArray: [0, 0],
+          delay: (Math.abs(imgIndex - index) - 1) * 0.05,
+        },
+        "start"
+      )
       .to(
         imgMesh.scale,
         {
           x: smallWidth,
           y: smallHeight,
+          delay: (Math.abs(imgIndex - index) - 1) * 0.05,
           onUpdate: function () {
             const { x, y } = this.targets()[0];
             const correctScaleRatio = correctShaderDimensionFn(y, smallHeight);
