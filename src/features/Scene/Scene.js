@@ -4,41 +4,41 @@ import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
 import { getDefaultImageDimension, getDefaultScrollLimit } from "utils/utilFn";
 import normalizeWheel from "normalize-wheel";
-import { useThree } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
+
 const Scene = ({ scrollPosRef }) => {
   const mounted = useRefMounted();
-  const animationRef = useRef();
   const imagesRef = useRef();
-  const { viewport } = useThree();
+  const { viewport, invalidate } = useThree();
   const { width } = viewport;
-  console.log("rendered");
 
-  const updatePlanes = useCallback(() => {
-    const { current, target } = scrollPosRef.current;
-    let newCurrentPos = current + (target - current) * 0.03;
-    if (Math.abs(newCurrentPos - target) <= 0.001) {
-      newCurrentPos = target;
-    }
-    const { width: defaultWidth, gap: defaultGap } =
-      getDefaultImageDimension(width);
-    imagesRef.current.children.forEach((item, index) => {
-      const defaultPosition = index * (defaultWidth + defaultGap);
-      item.position.x = defaultPosition + newCurrentPos;
-    });
+  const updatePlanes = useCallback(
+    (deltaTimeValue) => {
+      const { current, target } = scrollPosRef.current;
+      let newCurrentPos = current + (target - current) * 6 * deltaTimeValue;
+      if (Math.abs(newCurrentPos - target) <= 0.001) {
+        newCurrentPos = target;
+      }
+      const { width: defaultWidth, gap: defaultGap } =
+        getDefaultImageDimension(width);
+      imagesRef.current.children.forEach((item, index) => {
+        const defaultPosition = index * (defaultWidth + defaultGap);
+        item.position.x = defaultPosition + newCurrentPos;
+      });
 
-    scrollPosRef.current.current = newCurrentPos;
-    if (newCurrentPos !== target) {
-      animationRef.current = window.requestAnimationFrame(updatePlanes);
-    }
-  }, [scrollPosRef, width]);
+      scrollPosRef.current.current = newCurrentPos;
+      if (newCurrentPos !== target) {
+        invalidate();
+      }
+    },
+    [invalidate, scrollPosRef, width]
+  );
 
   const onWheelHandler = useCallback(
     (e) => {
       const { pixelX, pixelY } = normalizeWheel(e);
-      const relativeSpeed = Math.min(
-        Math.max(Math.abs(pixelX), Math.abs(pixelY)),
-        100
-      );
+      const relativeSpeed = Math.max(Math.abs(pixelX), Math.abs(pixelY));
+
       const scrollSpeed = relativeSpeed * 0.01;
 
       let direction = "L";
@@ -67,16 +67,11 @@ const Scene = ({ scrollPosRef }) => {
       const scrollLimit = getDefaultScrollLimit(width);
       target = Math.max(-scrollLimit, Math.min(0, target));
       scrollPosRef.current.target = target;
-
-      animationRef.current = window.requestAnimationFrame(updatePlanes);
+      invalidate();
+      // animationRef.current = window.requestAnimationFrame(updatePlanes);
     },
-    [scrollPosRef, updatePlanes, width]
+    [invalidate, scrollPosRef, width]
   );
-
-  useEffect(() => {
-    return () =>
-      animationRef.current && window.cancelAnimationFrame(animationRef.current);
-  }, []);
 
   useEffect(() => {
     window.addEventListener("wheel", onWheelHandler);
@@ -84,6 +79,11 @@ const Scene = ({ scrollPosRef }) => {
       window.removeEventListener("wheel", onWheelHandler);
     };
   }, [onWheelHandler]);
+
+  useFrame((_, delta) => {
+    if (!mounted.current) return;
+    updatePlanes(delta);
+  });
 
   return (
     <group ref={imagesRef}>
