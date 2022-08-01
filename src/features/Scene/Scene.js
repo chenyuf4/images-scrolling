@@ -5,7 +5,7 @@ import { useRef, useCallback, useEffect } from "react";
 import {
   getDefaultImageDimension,
   getDefaultScrollLimit,
-  getImageOffsetLimit
+  getImageOffsetLimit,
 } from "utils/utilFn";
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
@@ -25,9 +25,8 @@ const Scene = ({ scrollPosRef }) => {
       if (Math.abs(newCurrentPos - target) <= 0.001) {
         newCurrentPos = target;
       }
-      const { width: defaultWidth, gap: defaultGap } = getDefaultImageDimension(
-        width
-      );
+      const { width: defaultWidth, gap: defaultGap } =
+        getDefaultImageDimension(width);
       const scrollPercentage = Math.abs(current) / scrollLimit;
       imagesRef.current.children.forEach((item, index) => {
         const defaultPosition = index * (defaultWidth + defaultGap);
@@ -36,7 +35,7 @@ const Scene = ({ scrollPosRef }) => {
         const defaultImageOffset = (imageOffsetLimit * index) / (numImages - 1);
         item.material.uniforms.offset.value = [
           defaultImageOffset - scrollPercentage * imageOffsetLimit,
-          0
+          0,
         ];
       });
 
@@ -51,7 +50,10 @@ const Scene = ({ scrollPosRef }) => {
   const onWheelHandler = useCallback(
     (e) => {
       const { pixelX, pixelY } = normalizeWheel(e);
-      const relativeSpeed = Math.max(Math.abs(pixelX), Math.abs(pixelY));
+      const relativeSpeed = Math.min(
+        100,
+        Math.max(Math.abs(pixelX), Math.abs(pixelY))
+      );
 
       const scrollSpeed = relativeSpeed * 0.01;
 
