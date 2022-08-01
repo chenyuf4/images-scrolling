@@ -3,18 +3,31 @@ import {
   DEFAULT_IMAGE_WIDTH_HEIGHT_RATIO,
   DEFAULT_IMAGE_WIDTH_RATIO,
   DEFAULT_IMAGE_SCALE,
-  IMAGE_DIMENSION
+  IMAGE_DIMENSION,
+  SMALL_IMAGE_WIDTH_RATIO,
+  SMALL_IMAGE_GAP_RATIO,
+  SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
 } from "./format";
 import { IMAGES_ARR } from "./format";
 
 const numImages = IMAGES_ARR.length;
+
+export const getSmallImageDimension = (canvasWidth) => {
+  return {
+    width: canvasWidth * SMALL_IMAGE_WIDTH_RATIO,
+    height:
+      (canvasWidth * SMALL_IMAGE_WIDTH_RATIO) / SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
+    gap: canvasWidth * SMALL_IMAGE_GAP_RATIO,
+  };
+};
+
 export const getDefaultImageDimension = (canvasWidth) => {
   return {
     width: canvasWidth * DEFAULT_IMAGE_WIDTH_RATIO,
     height:
       (canvasWidth * DEFAULT_IMAGE_WIDTH_RATIO) /
       DEFAULT_IMAGE_WIDTH_HEIGHT_RATIO,
-    gap: canvasWidth * DEFAULT_IMAGE_GAP_RATIO
+    gap: canvasWidth * DEFAULT_IMAGE_GAP_RATIO,
   };
 };
 
@@ -24,10 +37,8 @@ export const getDefaultScrollLimit = (canvasWidth) => {
 };
 
 export const getImageOffsetLimit = (canvasWidth) => {
-  const {
-    width: defaultWidth,
-    height: defaultHeight
-  } = getDefaultImageDimension(canvasWidth);
+  const { width: defaultWidth, height: defaultHeight } =
+    getDefaultImageDimension(canvasWidth);
 
   return (
     0.5 -

@@ -1,23 +1,46 @@
 import ImageBlock from "features/ImageBlock/ImageBlock";
-import { IMAGES_ARR } from "utils/format";
+import { IMAGES_ARR, IMAGE_DIMENSION, DEFAULT_IMAGE_SCALE } from "utils/format";
 import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
 import {
   getDefaultImageDimension,
   getDefaultScrollLimit,
   getImageOffsetLimit,
+  getSmallImageDimension,
 } from "utils/utilFn";
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
-
+import gsap from "gsap";
 const Scene = ({ scrollPosRef }) => {
   const mounted = useRefMounted();
   const imagesRef = useRef();
   const { viewport, invalidate } = useThree();
-  const { width } = viewport;
+  const { width, height } = viewport;
   const imageOffsetLimit = getImageOffsetLimit(width);
   const scrollLimit = getDefaultScrollLimit(width);
   const numImages = IMAGES_ARR.length;
+
+  const {
+    width: defaultWidth,
+    height: defaultHeight,
+    gap: defaultGap,
+  } = getDefaultImageDimension(width);
+
+  const {
+    width: smallWidth,
+    height: smallHeight,
+    gap: smallGap,
+  } = getSmallImageDimension(width);
+
+  const tlRef = useRef(
+    gsap.timeline({
+      onUpdate: () => invalidate(),
+      onUpdateParams: () => invalidate(),
+      onStart: () => invalidate(),
+    })
+  );
+
+  const modeRef = useRef("list");
   const updatePlanes = useCallback(
     (deltaTimeValue) => {
       const { current, target } = scrollPosRef.current;
@@ -47,9 +70,75 @@ const Scene = ({ scrollPosRef }) => {
     [invalidate, scrollPosRef, width, imageOffsetLimit, numImages, scrollLimit]
   );
 
+  // (smallHeight/larget, 1) => (defaultHeight, 0.8)
+  const correctShaderDimensionFn = useCallback(
+    (h, targetHeight) => {
+      const a = (1 - 1 / DEFAULT_IMAGE_SCALE) / (targetHeight - defaultHeight);
+      const b = 1 - a * targetHeight;
+      return a * h + b;
+    },
+    [defaultHeight]
+  );
+
+  const recoverImages = useCallback(
+    (imgMesh, imgIndex) => {
+      const tl = tlRef.current;
+      const defaultPosition = imgIndex * (defaultWidth + defaultGap);
+      tl.to(
+        imgMesh.scale,
+        {
+          x: defaultWidth,
+          y: defaultHeight,
+          onUpdate: function () {
+            const { x, y } = this.targets()[0];
+            const correctScaleRatio = correctShaderDimensionFn(
+              y,
+              y > defaultHeight ? height : smallHeight
+            );
+            imgMesh.material.uniforms.dimension.value = [
+              (y / x) *
+                (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                correctScaleRatio,
+              correctScaleRatio,
+            ];
+          },
+        },
+        "start"
+      ).to(
+        imgMesh.position,
+        {
+          x: defaultPosition + scrollPosRef.current.current,
+          y: 0,
+          z: 0,
+        },
+        "start"
+      );
+    },
+    [
+      correctShaderDimensionFn,
+      defaultGap,
+      defaultHeight,
+      defaultWidth,
+      height,
+      scrollPosRef,
+      smallHeight,
+    ]
+  );
+
   const onWheelHandler = useCallback(
     (e) => {
       const { pixelX, pixelY } = normalizeWheel(e);
+
+      // clear all animations and make all images return to original positions
+      if (modeRef.current === "detail") {
+        modeRef.current = "list";
+        const tl = tlRef.current;
+        tl.clear();
+        imagesRef.current.children.forEach((imgMesh, imgIndex) => {
+          recoverImages(imgMesh, imgIndex);
+        });
+      }
+
       const relativeSpeed = Math.min(
         100,
         Math.max(Math.abs(pixelX), Math.abs(pixelY))
@@ -85,7 +174,7 @@ const Scene = ({ scrollPosRef }) => {
       scrollPosRef.current.target = target;
       invalidate();
     },
-    [invalidate, scrollPosRef, width]
+    [invalidate, recoverImages, scrollPosRef, width]
   );
 
   useEffect(() => {
@@ -96,16 +185,30 @@ const Scene = ({ scrollPosRef }) => {
   }, [onWheelHandler]);
 
   useFrame((_, delta) => {
-    if (!mounted.current) return;
+    if (
+      !mounted.current ||
+      scrollPosRef.current.current === scrollPosRef.current.target
+    )
+      return;
     updatePlanes(delta);
   });
 
   return (
-    <group ref={imagesRef}>
-      {IMAGES_ARR.map((url, index) => (
-        <ImageBlock url={url} key={index} index={index} imagesRef={imagesRef} />
-      ))}
-    </group>
+    <>
+      <group ref={imagesRef}>
+        {IMAGES_ARR.map((url, index) => (
+          <ImageBlock
+            url={url}
+            key={index}
+            index={index}
+            imagesRef={imagesRef}
+            tlRef={tlRef}
+            modeRef={modeRef}
+            scrollPosRef={scrollPosRef}
+          />
+        ))}
+      </group>
+    </>
   );
 };
 
