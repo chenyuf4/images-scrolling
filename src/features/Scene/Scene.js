@@ -1,8 +1,18 @@
 import ImageBlock from "features/ImageBlock/ImageBlock";
-import { IMAGES_ARR, DELAY_CONSTANT } from "utils/format";
+import {
+  IMAGES_ARR,
+  DELAY_CONSTANT,
+  DEFAULT_IMAGE_SCALE,
+  IMAGE_DIMENSION
+} from "utils/format";
 import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
-import { getDefaultImageDimension, getDefaultScrollLimit } from "utils/utilFn";
+import {
+  getDefaultImageDimension,
+  getDefaultScrollLimit,
+  getImageOffsetLimit,
+  getSmallImageDimension
+} from "utils/utilFn";
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
@@ -12,7 +22,7 @@ const Scene = ({ scrollPosRef }) => {
   const mounted = useRefMounted();
   const imagesRef = useRef();
   const { viewport, invalidate } = useThree();
-  const { width } = viewport;
+  const { width, height } = viewport;
   const numImages = IMAGES_ARR.length;
 
   const {
@@ -20,6 +30,15 @@ const Scene = ({ scrollPosRef }) => {
     height: defaultHeight,
     gap: defaultGap
   } = getDefaultImageDimension(width);
+
+  const {
+    width: smallWidth,
+    height: smallHeight,
+    gap: smallGap
+  } = getSmallImageDimension(width);
+
+  const imageOffsetLimit = getImageOffsetLimit(width);
+  const scrollLimit = getDefaultScrollLimit(width);
 
   const imagesPosRef = useRef(
     Array.from({ length: numImages }).map((_, index) => ({
@@ -45,14 +64,9 @@ const Scene = ({ scrollPosRef }) => {
   const updatePlanes = useCallback(
     (deltaTimeValue) => {
       imagesRef.current.children.forEach((item, index) => {
-        const {
-          currentX,
-          targetX,
-          currentY,
-          targetY,
-          currentZ,
-          targetZ
-        } = imagesPosRef.current[index];
+        const { currentX, targetX, currentY, targetY } = imagesPosRef.current[
+          index
+        ];
         // updateX
         let newCurrentPosX =
           currentX + (targetX - currentX) * 7 * deltaTimeValue;
@@ -69,17 +83,18 @@ const Scene = ({ scrollPosRef }) => {
         }
         item.position.y = newCurrentPosY;
 
-        // updateZ
-        // let newCurrentPosZ =
-        //   currentZ + (targetZ - currentZ) * 5 * deltaTimeValue;
-        // if (Math.abs(newCurrentPosZ - targetZ) <= 0.001) {
-        //   newCurrentPosZ = targetZ;
-        // }
-        // item.position.z = newCurrentPosZ;
-
         imagesPosRef.current[index].currentX = newCurrentPosX;
         imagesPosRef.current[index].currentY = newCurrentPosY;
-        // imagesPosRef.current[index].currentZ = newCurrentPosZ;
+
+        // update image scroll offset
+        const scrollPercentage =
+          Math.abs(newCurrentPosX - index * (defaultGap + defaultWidth)) /
+          scrollLimit;
+        const defaultImageOffset = (imageOffsetLimit * index) / (numImages - 1);
+        item.material.uniforms.offset.value = [
+          defaultImageOffset - scrollPercentage * imageOffsetLimit,
+          0
+        ];
       });
 
       // scrollPosRef.current.current = newCurrentPos;
@@ -94,7 +109,23 @@ const Scene = ({ scrollPosRef }) => {
         invalidate();
       }
     },
-    [invalidate]
+    [
+      invalidate,
+      defaultWidth,
+      defaultGap,
+      imageOffsetLimit,
+      numImages,
+      scrollLimit
+    ]
+  );
+
+  const correctShaderDimensionFn = useCallback(
+    (h, targetHeight) => {
+      const a = (1 - 1 / DEFAULT_IMAGE_SCALE) / (targetHeight - defaultHeight);
+      const b = 1 - a * targetHeight;
+      return a * h + b;
+    },
+    [defaultHeight]
   );
 
   const onWheelHandler = useCallback(
@@ -163,6 +194,15 @@ const Scene = ({ scrollPosRef }) => {
                     });
                   j += 1;
                 });
+
+                const { x, y } = this.targets()[0];
+                const correctScaleRatio = correctShaderDimensionFn(y, height);
+                mainImage.material.uniforms.dimension.value = [
+                  (y / x) *
+                    (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                    correctScaleRatio,
+                  correctScaleRatio
+                ];
               }
             },
             "start"
@@ -185,7 +225,20 @@ const Scene = ({ scrollPosRef }) => {
               y: defaultHeight,
               duration: 0.6,
               delay: i * DELAY_CONSTANT,
-              ease: Circ.easeOut
+              ease: Circ.easeOut,
+              onUpdate: function () {
+                const { x, y } = this.targets()[0];
+                const correctScaleRatio = correctShaderDimensionFn(
+                  y,
+                  smallHeight
+                );
+                imgMesh.material.uniforms.dimension.value = [
+                  (y / x) *
+                    (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                    correctScaleRatio,
+                  correctScaleRatio
+                ];
+              }
             },
             "start"
           );

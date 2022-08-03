@@ -38,6 +38,12 @@ const ImageBlock = ({
 
   const meshRef = useRef();
 
+  const correctShaderDimensionFn = (h, targetHeight) => {
+    const a = (1 - 1 / DEFAULT_IMAGE_SCALE) / (targetHeight - defaultHeight);
+    const b = 1 - a * targetHeight;
+    return a * h + b;
+  };
+
   const moveCenterImage = () => {
     const tl = tlRef.current;
     tl.set(
@@ -52,7 +58,17 @@ const ImageBlock = ({
         {
           x: width,
           y: height,
-          ease: Circ.easeOut
+          ease: Circ.easeOut,
+          onUpdate: function () {
+            const { x, y } = this.targets()[0];
+            const correctScaleRatio = correctShaderDimensionFn(y, height);
+            meshRef.current.material.uniforms.dimension.value = [
+              (y / x) *
+                (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                correctScaleRatio,
+              correctScaleRatio
+            ];
+          }
         },
         "start"
       )
@@ -80,7 +96,17 @@ const ImageBlock = ({
           x: smallWidth,
           y: smallHeight,
           delay: (Math.abs(imgIndex - index) - 1) * DELAY_CONSTANT,
-          ease: Circ.easeOut
+          ease: Circ.easeOut,
+          onUpdate: function () {
+            const { x, y } = this.targets()[0];
+            const correctScaleRatio = correctShaderDimensionFn(y, smallHeight);
+            imgMesh.material.uniforms.dimension.value = [
+              (y / x) *
+                (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                correctScaleRatio,
+              correctScaleRatio
+            ];
+          }
         },
         "start"
       )
