@@ -63,9 +63,8 @@ class ImageShaderMaterial extends ShaderMaterial {
     return this.uniforms.offset.value;
   }
 
-  set offset(val) {
-    this.uniforms.offset.value[0] = val[0];
-    this.uniforms.offset.value[1] = val[1];
+  set offset(value) {
+    this.uniforms.offset.value = value;
   }
 }
 

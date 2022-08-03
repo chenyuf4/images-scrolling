@@ -9,7 +9,7 @@ import {
   IMAGE_DIMENSION,
   DEFAULT_IMAGE_SCALE,
   IMAGES_ARR,
-  DELAY_CONSTANT
+  DELAY_CONSTANT,
 } from "utils/format";
 const ImageBlock = ({
   url,
@@ -18,7 +18,7 @@ const ImageBlock = ({
   imagesPosRef,
   clickedImageRef,
   modeRef,
-  tlRef
+  tlRef,
 }) => {
   const { viewport } = useThree();
   const [imgTexture] = useTexture([url]);
@@ -27,13 +27,13 @@ const ImageBlock = ({
   const {
     width: defaultWidth,
     height: defaultHeight,
-    gap: defaultGap
+    gap: defaultGap,
   } = getDefaultImageDimension(width);
 
   const {
     width: smallWidth,
     height: smallHeight,
-    gap: smallGap
+    gap: smallGap,
   } = getSmallImageDimension(width);
 
   const meshRef = useRef();
@@ -49,7 +49,7 @@ const ImageBlock = ({
     tl.set(
       meshRef.current.position,
       {
-        z: 0
+        z: 0,
       },
       "start"
     )
@@ -66,16 +66,16 @@ const ImageBlock = ({
               (y / x) *
                 (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
                 correctScaleRatio,
-              correctScaleRatio
+              correctScaleRatio,
             ];
-          }
+          },
         },
         "start"
       )
       .set(
         imagesPosRef.current[index],
         {
-          targetX: 0
+          targetX: 0,
         },
         "start"
       );
@@ -86,7 +86,7 @@ const ImageBlock = ({
     tl.set(
       imgMesh.position,
       {
-        z: 0.001
+        z: 0.001,
       },
       "start"
     )
@@ -104,9 +104,18 @@ const ImageBlock = ({
               (y / x) *
                 (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
                 correctScaleRatio,
-              correctScaleRatio
+              correctScaleRatio,
             ];
-          }
+          },
+        },
+        "start"
+      )
+      .to(
+        imgMesh.material.uniforms.offset.value,
+        {
+          endArray: [0, 0],
+          delay: (Math.abs(imgIndex - index) - 1) * DELAY_CONSTANT,
+          ease: Circ.easeOut,
         },
         "start"
       )
@@ -118,7 +127,7 @@ const ImageBlock = ({
             (imgIndex - 7.5) * (smallWidth + smallGap) -
             SMALL_IMAGES_PADDING,
           targetY: -height / 2 + smallHeight / 2 + SMALL_IMAGES_PADDING,
-          delay: (Math.abs(imgIndex - index) - 1) * DELAY_CONSTANT
+          delay: (Math.abs(imgIndex - index) - 1) * DELAY_CONSTANT,
         },
         "start"
       );
@@ -153,7 +162,7 @@ const ImageBlock = ({
           (defaultHeight / defaultWidth) *
             (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
             (1 / DEFAULT_IMAGE_SCALE),
-          1 / DEFAULT_IMAGE_SCALE
+          1 / DEFAULT_IMAGE_SCALE,
         ]}
         offset={[
           ((0.5 -
@@ -163,7 +172,7 @@ const ImageBlock = ({
                 (1 / DEFAULT_IMAGE_SCALE))) *
             index) /
             (numImages - 1),
-          0
+          0,
         ]}
       />
     </mesh>
