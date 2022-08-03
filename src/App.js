@@ -18,7 +18,7 @@ const App = () => {
 
   return (
     <>
-      <Home />
+      {/* <Home /> */}
       <Canvas
         frameloop="demand"
         dpr={Math.max(window.devicePixelRatio, 2)}
