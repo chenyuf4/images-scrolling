@@ -68,7 +68,7 @@ const Scene = ({ scrollPosRef }) => {
           imagesPosRef.current[index];
         // updateX
         let newCurrentPosX =
-          currentX + (targetX - currentX) * 6 * deltaTimeValue;
+          currentX + (targetX - currentX) * 5.5 * deltaTimeValue;
         if (Math.abs(newCurrentPosX - targetX) <= 0.001) {
           newCurrentPosX = targetX;
         }
@@ -76,7 +76,7 @@ const Scene = ({ scrollPosRef }) => {
 
         // updateY
         let newCurrentPosY =
-          currentY + (targetY - currentY) * 6 * deltaTimeValue;
+          currentY + (targetY - currentY) * 5.5 * deltaTimeValue;
         if (Math.abs(newCurrentPosY - targetY) <= 0.001) {
           newCurrentPosY = targetY;
         }
@@ -173,7 +173,7 @@ const Scene = ({ scrollPosRef }) => {
               x: defaultWidth,
               y: defaultHeight,
               ease: Circ.easeOut,
-              duration: 0.8,
+              duration: 0.7,
               onUpdate: function () {
                 let j = 0;
                 imagesRef.current.children.forEach((_, imgIndex) => {
@@ -225,7 +225,7 @@ const Scene = ({ scrollPosRef }) => {
             {
               x: defaultWidth,
               y: defaultHeight,
-              duration: 0.5,
+              duration: 0.4,
               delay: i * DELAY_CONSTANT,
               ease: Circ.easeOut,
               onUpdate: function () {
