@@ -45,9 +45,7 @@ const Scene = ({ scrollPosRef }) => {
       currentX: index * (defaultWidth + defaultGap),
       targetX: index * (defaultWidth + defaultGap),
       currentY: 0,
-      targetY: 0,
-      currentZ: 0,
-      targetZ: 0
+      targetY: 0
     }))
   );
 
@@ -104,9 +102,7 @@ const Scene = ({ scrollPosRef }) => {
       if (
         imagesPosRef.current.some(
           (item) =>
-            item.targetX !== item.currentX ||
-            item.targetY !== item.currentY ||
-            item.targetZ !== item.currentZ
+            item.targetX !== item.currentX || item.targetY !== item.currentY
         )
       ) {
         invalidate();
@@ -286,9 +282,7 @@ const Scene = ({ scrollPosRef }) => {
       !mounted.current ||
       imagesPosRef.current.every(
         (item) =>
-          item.targetZ === item.currentZ &&
-          item.targetY === item.currentY &&
-          item.targetX === item.currentX
+          item.targetY === item.currentY && item.targetX === item.currentX
       )
     )
       return;
