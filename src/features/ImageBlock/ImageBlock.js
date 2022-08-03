@@ -59,6 +59,7 @@ const ImageBlock = ({
           x: width,
           y: height,
           ease: Circ.easeOut,
+          duration: 0.95,
           onUpdate: function () {
             const { x, y } = this.targets()[0];
             const correctScaleRatio = correctShaderDimensionFn(y, height);
