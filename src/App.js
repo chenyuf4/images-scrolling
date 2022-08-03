@@ -8,11 +8,12 @@ import Home from "features/Home/Home";
 const App = () => {
   const scrollPosRef = useRef({
     current: 0,
-    target: 0,
+    target: 0
   });
+
   const canvasSizeRef = useRef({
     width: 0,
-    height: 0,
+    height: 0
   });
 
   return (
