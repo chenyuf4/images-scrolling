@@ -17,7 +17,7 @@ import {
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
-import { Power4 } from "gsap";
+import { Power4, Circ } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 
 gsap.registerPlugin(CustomEase);
@@ -184,7 +184,6 @@ const Scene = ({ scrollPosRef }) => {
           .to(mainImage.scale, {
             x: defaultWidth,
             y: defaultHeight,
-            // ease: Power4.easeOut,
             ease: CustomEase.create(
               "custom",
               "M0,0 C0.038,0.5 0.05,0.562 0.196,0.756 0.344,0.953 0.504,1 1,1 "
@@ -240,7 +239,7 @@ const Scene = ({ scrollPosRef }) => {
             {
               x: defaultWidth,
               y: defaultHeight,
-              duration: 0.45,
+              duration: 0.6,
               delay: i * DELAY_CONSTANT,
               ease: Power4.easeOut,
               onUpdate: function () {
