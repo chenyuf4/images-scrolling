@@ -1,9 +1,10 @@
 import ImageBlock from "features/ImageBlock/ImageBlock";
+import MinimapImageBlock from "features/MinimapImageBlock/MinimapImageBlock";
 import {
   IMAGES_ARR,
   DELAY_CONSTANT,
   DEFAULT_IMAGE_SCALE,
-  IMAGE_DIMENSION,
+  IMAGE_DIMENSION
 } from "utils/format";
 import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
@@ -11,7 +12,7 @@ import {
   getDefaultImageDimension,
   getDefaultScrollLimit,
   getImageOffsetLimit,
-  getSmallImageDimension,
+  getSmallImageDimension
 } from "utils/utilFn";
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
@@ -31,7 +32,7 @@ const Scene = ({ scrollPosRef }) => {
   const {
     width: defaultWidth,
     height: defaultHeight,
-    gap: defaultGap,
+    gap: defaultGap
   } = getDefaultImageDimension(width);
 
   const { height: smallHeight } = getSmallImageDimension(width);
@@ -44,25 +45,27 @@ const Scene = ({ scrollPosRef }) => {
       currentX: index * (defaultWidth + defaultGap),
       targetX: index * (defaultWidth + defaultGap),
       currentY: 0,
-      targetY: 0,
+      targetY: 0
     }))
   );
 
   const clickedImageRef = useRef(-1);
   const modeRef = useRef("list");
+  const minimapImagesRef = useRef();
   const tlRef = useRef(
     gsap.timeline({
       onStart: () => invalidate(),
       onUpdateParams: () => invalidate(),
-      onUpdate: () => invalidate(),
+      onUpdate: () => invalidate()
     })
   );
 
   const updatePlanes = useCallback(
     (deltaTimeValue) => {
       imagesRef.current.children.forEach((item, index) => {
-        const { currentX, targetX, currentY, targetY } =
-          imagesPosRef.current[index];
+        const { currentX, targetX, currentY, targetY } = imagesPosRef.current[
+          index
+        ];
         // updateX
         let newCurrentPosX =
           currentX + (targetX - currentX) * 5.5 * deltaTimeValue;
@@ -91,7 +94,7 @@ const Scene = ({ scrollPosRef }) => {
             (imageOffsetLimit * index) / (numImages - 1);
           item.material.uniforms.offset.value = [
             defaultImageOffset - scrollPercentage * imageOffsetLimit,
-            0,
+            0
           ];
         }
       });
@@ -112,7 +115,7 @@ const Scene = ({ scrollPosRef }) => {
       defaultGap,
       imageOffsetLimit,
       numImages,
-      scrollLimit,
+      scrollLimit
     ]
   );
 
@@ -174,7 +177,7 @@ const Scene = ({ scrollPosRef }) => {
                   direction === "L" ? -scrollSpeed : scrollSpeed
                 )
               ),
-              targetY: 0,
+              targetY: 0
             },
             "start"
           )
@@ -199,12 +202,12 @@ const Scene = ({ scrollPosRef }) => {
                         imagesPosRef.current[activeImage].targetX +
                         (imgIndex - activeImage) * (defaultWidth + defaultGap),
                       targetY: 0,
-                      delay: j * DELAY_CONSTANT,
+                      delay: j * DELAY_CONSTANT
                     },
                     "start"
                   )
                   .set(imagesPosRef.current[imgIndex], {
-                    targetZ: 0,
+                    targetZ: 0
                   });
                 j += 1;
               });
@@ -215,10 +218,19 @@ const Scene = ({ scrollPosRef }) => {
                 (y / x) *
                   (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
                   correctScaleRatio,
-                correctScaleRatio,
+                correctScaleRatio
               ];
+            }
+          })
+          .to(
+            minimapImagesRef.current.children[activeImage].position,
+            {
+              y: -height / 2 - smallHeight,
+              duration: 1.1,
+              ease: Power4.easeOut
             },
-          });
+            "start"
+          );
 
         let i = 1;
         imagesRef.current.children.forEach((imgMesh, imgIndex) => {
@@ -241,9 +253,9 @@ const Scene = ({ scrollPosRef }) => {
                   (y / x) *
                     (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
                     correctScaleRatio,
-                  correctScaleRatio,
+                  correctScaleRatio
                 ];
-              },
+              }
             },
             "start"
           );
@@ -272,7 +284,7 @@ const Scene = ({ scrollPosRef }) => {
       defaultHeight,
       correctShaderDimensionFn,
       height,
-      smallHeight,
+      smallHeight
     ]
   );
 
@@ -305,6 +317,19 @@ const Scene = ({ scrollPosRef }) => {
             index={index}
             imagesRef={imagesRef}
             imagesPosRef={imagesPosRef}
+            minimapImagesRef={minimapImagesRef}
+            clickedImageRef={clickedImageRef}
+            modeRef={modeRef}
+            tlRef={tlRef}
+          />
+        ))}
+      </group>
+      <group ref={minimapImagesRef}>
+        {IMAGES_ARR.map((url, index) => (
+          <MinimapImageBlock
+            url={url}
+            key={index}
+            index={index}
             clickedImageRef={clickedImageRef}
             modeRef={modeRef}
             tlRef={tlRef}

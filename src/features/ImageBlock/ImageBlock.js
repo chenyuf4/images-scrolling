@@ -3,7 +3,7 @@ import { useTexture } from "@react-three/drei";
 import { getDefaultImageDimension, getSmallImageDimension } from "utils/utilFn";
 import "./ImageShaderMaterial";
 import { useRef } from "react";
-import { Circ } from "gsap";
+import { Circ, Power4 } from "gsap";
 import {
   SMALL_IMAGES_PADDING,
   IMAGE_DIMENSION,
@@ -18,6 +18,7 @@ const ImageBlock = ({
   imagesRef,
   imagesPosRef,
   clickedImageRef,
+  minimapImagesRef,
   modeRef,
   tlRef
 }) => {
@@ -147,12 +148,23 @@ const ImageBlock = ({
           moveSideImage(imgMesh, imgIndex);
         }
       });
+      // move minimap block
+      const targetMinimapBlock = minimapImagesRef.current.children[index];
+      tlRef.current.to(
+        targetMinimapBlock.position,
+        {
+          y: -height / 2 + smallHeight / 2 + SMALL_IMAGES_PADDING,
+          duration: 1.1,
+          ease: Power4.easeOut
+        },
+        "start"
+      );
     }
   };
   return (
     <mesh
       ref={meshRef}
-      position={[index * (defaultWidth + defaultGap), 0, 0]}
+      position={[index * (defaultWidth + defaultGap), 0, 0.001]}
       scale={[defaultWidth, defaultHeight, 1]}
       onClick={onClickHandler}
     >
