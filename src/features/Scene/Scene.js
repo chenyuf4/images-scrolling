@@ -4,7 +4,8 @@ import {
   IMAGES_ARR,
   DELAY_CONSTANT,
   DEFAULT_IMAGE_SCALE,
-  IMAGE_DIMENSION
+  IMAGE_DIMENSION,
+  SMALL_IMAGES_PADDING,
 } from "utils/format";
 import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
@@ -12,11 +13,12 @@ import {
   getDefaultImageDimension,
   getDefaultScrollLimit,
   getImageOffsetLimit,
-  getSmallImageDimension
+  getSmallImageDimension,
 } from "utils/utilFn";
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
+import { useMediaQuery } from "react-responsive";
 import { Power4, Circ } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 
@@ -28,14 +30,20 @@ const Scene = ({ scrollPosRef }) => {
   const { viewport, invalidate } = useThree();
   const { width, height } = viewport;
   const numImages = IMAGES_ARR.length;
+  const isBigScreen = useMediaQuery({ query: "(min-width: 1224px)" });
+  const isLandscape = useMediaQuery({ query: "(orientation: landscape)" });
 
   const {
     width: defaultWidth,
     height: defaultHeight,
-    gap: defaultGap
+    gap: defaultGap,
   } = getDefaultImageDimension(width);
 
-  const { height: smallHeight } = getSmallImageDimension(width);
+  const {
+    width: smallWidth,
+    height: smallHeight,
+    gap: smallGap,
+  } = getSmallImageDimension(width);
 
   const imageOffsetLimit = getImageOffsetLimit(width);
   const scrollLimit = getDefaultScrollLimit(width);
@@ -45,7 +53,7 @@ const Scene = ({ scrollPosRef }) => {
       currentX: index * (defaultWidth + defaultGap),
       targetX: index * (defaultWidth + defaultGap),
       currentY: 0,
-      targetY: 0
+      targetY: 0,
     }))
   );
 
@@ -56,16 +64,15 @@ const Scene = ({ scrollPosRef }) => {
     gsap.timeline({
       onStart: () => invalidate(),
       onUpdateParams: () => invalidate(),
-      onUpdate: () => invalidate()
+      onUpdate: () => invalidate(),
     })
   );
 
   const updatePlanes = useCallback(
     (deltaTimeValue) => {
       imagesRef.current.children.forEach((item, index) => {
-        const { currentX, targetX, currentY, targetY } = imagesPosRef.current[
-          index
-        ];
+        const { currentX, targetX, currentY, targetY } =
+          imagesPosRef.current[index];
         // updateX
         let newCurrentPosX =
           currentX + (targetX - currentX) * 5.5 * deltaTimeValue;
@@ -94,7 +101,7 @@ const Scene = ({ scrollPosRef }) => {
             (imageOffsetLimit * index) / (numImages - 1);
           item.material.uniforms.offset.value = [
             defaultImageOffset - scrollPercentage * imageOffsetLimit,
-            0
+            0,
           ];
         }
       });
@@ -115,7 +122,7 @@ const Scene = ({ scrollPosRef }) => {
       defaultGap,
       imageOffsetLimit,
       numImages,
-      scrollLimit
+      scrollLimit,
     ]
   );
 
@@ -130,6 +137,7 @@ const Scene = ({ scrollPosRef }) => {
 
   const onWheelHandler = useCallback(
     (e) => {
+      if (!isBigScreen || !isLandscape) return;
       const { pixelX, pixelY } = normalizeWheel(e);
 
       const relativeSpeed = Math.min(
@@ -177,7 +185,7 @@ const Scene = ({ scrollPosRef }) => {
                   direction === "L" ? -scrollSpeed : scrollSpeed
                 )
               ),
-              targetY: 0
+              targetY: 0,
             },
             "start"
           )
@@ -201,12 +209,12 @@ const Scene = ({ scrollPosRef }) => {
                         imagesPosRef.current[activeImage].targetX +
                         (imgIndex - activeImage) * (defaultWidth + defaultGap),
                       targetY: 0,
-                      delay: j * DELAY_CONSTANT
+                      delay: j * DELAY_CONSTANT,
                     },
                     "start"
                   )
                   .set(imagesPosRef.current[imgIndex], {
-                    targetZ: 0
+                    targetZ: 0,
                   });
                 j += 1;
               });
@@ -217,16 +225,16 @@ const Scene = ({ scrollPosRef }) => {
                 (y / x) *
                   (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
                   correctScaleRatio,
-                correctScaleRatio
+                correctScaleRatio,
               ];
-            }
+            },
           })
           .to(
             minimapImagesRef.current.children[activeImage].position,
             {
               y: -height / 2 - smallHeight,
               duration: 1.1,
-              ease: Power4.easeOut
+              ease: Power4.easeOut,
             },
             "start"
           );
@@ -252,9 +260,9 @@ const Scene = ({ scrollPosRef }) => {
                   (y / x) *
                     (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
                     correctScaleRatio,
-                  correctScaleRatio
+                  correctScaleRatio,
                 ];
-              }
+              },
             },
             "start"
           );
@@ -276,16 +284,158 @@ const Scene = ({ scrollPosRef }) => {
       invalidate();
     },
     [
-      invalidate,
+      isBigScreen,
+      isLandscape,
       width,
-      defaultGap,
+      invalidate,
       defaultWidth,
+      defaultGap,
       defaultHeight,
-      correctShaderDimensionFn,
       height,
-      smallHeight
+      smallHeight,
+      correctShaderDimensionFn,
     ]
   );
+
+  const resizeHandler = useCallback(() => {
+    tlRef.current.clear();
+    if (modeRef.current === "detail") {
+      //set position
+      imagesPosRef.current.forEach((item, index) => {
+        if (index === clickedImageRef.current) {
+          tlRef.current.set(
+            item,
+            {
+              targetX: 0,
+              targetY: 0,
+            },
+            "start"
+          );
+        } else {
+          tlRef.current.set(
+            item,
+            {
+              targetX:
+                width / 2 +
+                (index - 7.5) * (smallWidth + smallGap) -
+                SMALL_IMAGES_PADDING,
+              targetY: -height / 2 + smallHeight / 2 + SMALL_IMAGES_PADDING,
+            },
+            "start"
+          );
+        }
+      });
+
+      imagesRef.current.children.forEach((imgMesh, imgIndex) => {
+        tlRef.current
+          .set(
+            imgMesh.scale,
+            {
+              x: imgIndex === clickedImageRef.current ? width : smallWidth,
+              y: imgIndex === clickedImageRef.current ? height : smallHeight,
+            },
+            "start"
+          )
+          .set(
+            imgMesh.material.uniforms.dimension.value,
+            {
+              endArray: [
+                (defaultHeight / defaultWidth) *
+                  (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height),
+                1,
+              ],
+            },
+            "start"
+          )
+          .set(imgMesh.material.uniforms.offset.value, {
+            endArray: [0, 0],
+          });
+      });
+
+      const defaultSmallPosX =
+        width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING;
+      minimapImagesRef.current.children.forEach((imgMesh, imgIndex) => {
+        tlRef.current.set(imgMesh.position, {
+          x: defaultSmallPosX + imgIndex * (smallWidth + smallGap),
+          y:
+            imgIndex === clickedImageRef.current
+              ? -height / 2 + smallHeight / 2 + SMALL_IMAGES_PADDING
+              : -height / 2 - smallHeight,
+        });
+      }, "start");
+    } else {
+      imagesPosRef.current.forEach((item, index) => {
+        tlRef.current.set(
+          item,
+          {
+            targetX: index * (defaultWidth + defaultGap),
+            targetY: 0,
+          },
+          "start"
+        );
+      });
+      imagesRef.current.children.forEach((imgMesh, imgIndex) => {
+        tlRef.current
+          .set(
+            imgMesh.scale,
+            {
+              x: defaultWidth,
+              y: defaultHeight,
+            },
+            "start"
+          )
+          .set(
+            imgMesh.material.uniforms.dimension.value,
+            {
+              endArray: [
+                (defaultHeight / defaultWidth) *
+                  (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                  (1 / DEFAULT_IMAGE_SCALE),
+                1 / DEFAULT_IMAGE_SCALE,
+              ],
+            },
+            "start"
+          )
+          .set(imgMesh.material.uniforms.offset.value, {
+            endArray: [
+              ((0.5 -
+                0.5 /
+                  ((defaultHeight / defaultWidth) *
+                    (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                    (1 / DEFAULT_IMAGE_SCALE))) *
+                imgIndex) /
+                (numImages - 1),
+              0,
+            ],
+          });
+      });
+      const defaultSmallPosX =
+        width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING;
+      minimapImagesRef.current.children.forEach((imgMesh, imgIndex) => {
+        tlRef.current.set(imgMesh.position, {
+          x: defaultSmallPosX + imgIndex * (smallWidth + smallGap),
+          y: -height / 2 - smallHeight,
+        });
+      }, "start");
+    }
+  }, [
+    defaultGap,
+    defaultHeight,
+    defaultWidth,
+    height,
+    numImages,
+    smallGap,
+    smallHeight,
+    smallWidth,
+    width,
+  ]);
+
+  useEffect(() => {
+    window.addEventListener("resize", resizeHandler);
+    return () => {
+      window.removeEventListener("resize", resizeHandler);
+    };
+  }, [resizeHandler]);
 
   useEffect(() => {
     window.addEventListener("wheel", onWheelHandler);

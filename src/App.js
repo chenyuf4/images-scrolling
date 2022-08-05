@@ -5,20 +5,25 @@ import { PerspectiveCamera } from "@react-three/drei";
 import Scene from "features/Scene/Scene";
 import { useRef } from "react";
 import Home from "features/Home/Home";
+import { useMediaQuery } from "react-responsive";
+import MobilePage from "features/MobilePage/MobilePage";
 const App = () => {
   const scrollPosRef = useRef({
     current: 0,
-    target: 0
+    target: 0,
   });
 
   const canvasSizeRef = useRef({
     width: 0,
-    height: 0
+    height: 0,
   });
+  const isBigScreen = useMediaQuery({ query: "(min-width: 1224px)" });
+  const isLandscape = useMediaQuery({ query: "(orientation: landscape)" });
 
   return (
     <>
-      {/* <Home /> */}
+      {(!isBigScreen || !isLandscape) && <MobilePage />}
+      <Home />
       <Canvas
         frameloop="demand"
         dpr={Math.max(window.devicePixelRatio, 2)}

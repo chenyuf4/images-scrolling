@@ -9,7 +9,7 @@ const MinimapImageBlock = ({ url, index }) => {
   const {
     width: smallWidth,
     height: smallHeight,
-    gap: smallGap
+    gap: smallGap,
   } = getSmallImageDimension(width);
   const defaultSmallPosX =
     width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING;
@@ -20,7 +20,7 @@ const MinimapImageBlock = ({ url, index }) => {
       position={[
         defaultSmallPosX + index * (smallWidth + smallGap),
         -height / 2 - smallHeight,
-        0
+        0.001,
       ]}
     />
   );
