@@ -28,7 +28,7 @@ gsap.registerPlugin(CustomEase);
 const Scene = () => {
   const mounted = useRefMounted();
   const imagesRef = useRef();
-  const { viewport, invalidate } = useThree();
+  const { viewport } = useThree();
   const { width, height } = viewport;
   const numImages = IMAGES_ARR.length;
   const isBigScreen = useMediaQuery({ query: "(min-width: 1224px)" });
@@ -97,13 +97,7 @@ const Scene = () => {
   const clickedImageRef = useRef(-1);
   const modeRef = useRef("list");
   const minimapImagesRef = useRef();
-  const tlRef = useRef(
-    gsap.timeline({
-      onStart: () => invalidate(),
-      onUpdateParams: () => invalidate(),
-      onUpdate: () => invalidate(),
-    })
-  );
+  const tlRef = useRef(gsap.timeline());
 
   const updatePlanes = useCallback(
     (deltaTimeValue) => {
@@ -142,25 +136,8 @@ const Scene = () => {
           ];
         }
       });
-
-      // scrollPosRef.current.current = newCurrentPos;
-      if (
-        imagesPosRef.current.some(
-          (item) =>
-            item.targetX !== item.currentX || item.targetY !== item.currentY
-        )
-      ) {
-        invalidate();
-      }
     },
-    [
-      invalidate,
-      defaultWidth,
-      defaultGap,
-      imageOffsetLimit,
-      numImages,
-      scrollLimit,
-    ]
+    [defaultWidth, defaultGap, imageOffsetLimit, numImages, scrollLimit]
   );
 
   const correctShaderDimensionFn = useCallback(
@@ -301,7 +278,6 @@ const Scene = () => {
           );
           i += 1;
         });
-        invalidate();
         return;
       }
       // update target position
@@ -314,14 +290,12 @@ const Scene = () => {
         target = Math.max(lBoundary, Math.min(rBoundary, target));
         imagesPosRef.current[index].targetX = target;
       });
-      invalidate();
     },
     [
       isBigScreen,
       isLandscape,
       getDefaultScrollLimit,
       width,
-      invalidate,
       defaultWidth,
       defaultGap,
       defaultHeight,
