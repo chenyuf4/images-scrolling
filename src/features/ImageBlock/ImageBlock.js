@@ -1,8 +1,7 @@
 import { useThree } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
-import { getDefaultImageDimension, getSmallImageDimension } from "utils/utilFn";
 import "./ImageShaderMaterial";
-import { useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Circ, Power4 } from "gsap";
 import {
   SMALL_IMAGES_PADDING,
@@ -10,6 +9,12 @@ import {
   DEFAULT_IMAGE_SCALE,
   IMAGES_ARR,
   DELAY_CONSTANT,
+  SMALL_IMAGE_WIDTH_RATIO,
+  SMALL_IMAGE_GAP_RATIO,
+  DEFAULT_IMAGE_WIDTH_RATIO,
+  DEFAULT_IMAGE_GAP_RATIO,
+  DEFAULT_IMAGE_WIDTH_HEIGHT_RATIO,
+  SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
 } from "utils/format";
 const SCALE_DELAY_CONSTANT = 0.035;
 const ImageBlock = ({
@@ -26,17 +31,36 @@ const ImageBlock = ({
   const [imgTexture] = useTexture([url]);
   const numImages = IMAGES_ARR.length;
   const { width, height } = viewport;
+
+  const getSmallImageDimension = useCallback(() => {
+    return {
+      width: width * SMALL_IMAGE_WIDTH_RATIO,
+      height:
+        (width * SMALL_IMAGE_WIDTH_RATIO) / SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
+      gap: width * SMALL_IMAGE_GAP_RATIO,
+    };
+  }, [width]);
+
+  const getDefaultImageDimension = useCallback(() => {
+    return {
+      width: width * DEFAULT_IMAGE_WIDTH_RATIO,
+      height:
+        (width * DEFAULT_IMAGE_WIDTH_RATIO) / DEFAULT_IMAGE_WIDTH_HEIGHT_RATIO,
+      gap: width * DEFAULT_IMAGE_GAP_RATIO,
+    };
+  }, [width]);
+
   const {
     width: defaultWidth,
     height: defaultHeight,
     gap: defaultGap,
-  } = getDefaultImageDimension(width);
+  } = getDefaultImageDimension();
 
   const {
     width: smallWidth,
     height: smallHeight,
     gap: smallGap,
-  } = getSmallImageDimension(width);
+  } = getSmallImageDimension();
 
   const meshRef = useRef();
 

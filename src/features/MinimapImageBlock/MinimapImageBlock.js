@@ -1,16 +1,31 @@
 import { Image } from "@react-three/drei";
-import { getSmallImageDimension } from "utils/utilFn";
+
 import { useThree } from "@react-three/fiber";
-import { SMALL_IMAGES_PADDING } from "utils/format";
+import { useCallback } from "react";
+import {
+  SMALL_IMAGES_PADDING,
+  SMALL_IMAGE_WIDTH_RATIO,
+  SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
+  SMALL_IMAGE_GAP_RATIO,
+} from "utils/format";
 
 const MinimapImageBlock = ({ url, index }) => {
   const { viewport } = useThree();
   const { width, height } = viewport;
+  const getSmallImageDimension = useCallback(() => {
+    return {
+      width: width * SMALL_IMAGE_WIDTH_RATIO,
+      height:
+        (width * SMALL_IMAGE_WIDTH_RATIO) / SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
+      gap: width * SMALL_IMAGE_GAP_RATIO,
+    };
+  }, [width]);
+
   const {
     width: smallWidth,
     height: smallHeight,
     gap: smallGap,
-  } = getSmallImageDimension(width);
+  } = getSmallImageDimension();
   const defaultSmallPosX =
     width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING;
   return (

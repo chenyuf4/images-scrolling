@@ -6,15 +6,16 @@ import {
   DEFAULT_IMAGE_SCALE,
   IMAGE_DIMENSION,
   SMALL_IMAGES_PADDING,
+  SMALL_IMAGE_WIDTH_RATIO,
+  SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
+  SMALL_IMAGE_GAP_RATIO,
+  DEFAULT_IMAGE_WIDTH_RATIO,
+  DEFAULT_IMAGE_GAP_RATIO,
+  DEFAULT_IMAGE_WIDTH_HEIGHT_RATIO,
 } from "utils/format";
 import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
-import {
-  getDefaultImageDimension,
-  getDefaultScrollLimit,
-  getImageOffsetLimit,
-  getSmallImageDimension,
-} from "utils/utilFn";
+
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
@@ -33,17 +34,53 @@ const Scene = () => {
   const isBigScreen = useMediaQuery({ query: "(min-width: 1224px)" });
   const isLandscape = useMediaQuery({ query: "(orientation: landscape)" });
 
+  const getSmallImageDimension = useCallback(() => {
+    return {
+      width: width * SMALL_IMAGE_WIDTH_RATIO,
+      height:
+        (width * SMALL_IMAGE_WIDTH_RATIO) / SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
+      gap: width * SMALL_IMAGE_GAP_RATIO,
+    };
+  }, [width]);
+
+  const getDefaultImageDimension = useCallback(() => {
+    return {
+      width: width * DEFAULT_IMAGE_WIDTH_RATIO,
+      height:
+        (width * DEFAULT_IMAGE_WIDTH_RATIO) / DEFAULT_IMAGE_WIDTH_HEIGHT_RATIO,
+      gap: width * DEFAULT_IMAGE_GAP_RATIO,
+    };
+  }, [width]);
+
+  const getDefaultScrollLimit = useCallback(() => {
+    const { width, gap } = getDefaultImageDimension();
+    return (numImages - 1) * (width + gap);
+  }, [getDefaultImageDimension, numImages]);
+
+  const getImageOffsetLimit = useCallback(() => {
+    const { width: defaultWidth, height: defaultHeight } =
+      getDefaultImageDimension();
+
+    return (
+      0.5 -
+      0.5 /
+        ((defaultHeight / defaultWidth) *
+          (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+          (1 / DEFAULT_IMAGE_SCALE))
+    );
+  }, [getDefaultImageDimension]);
+
   const {
     width: defaultWidth,
     height: defaultHeight,
     gap: defaultGap,
-  } = getDefaultImageDimension(width);
+  } = getDefaultImageDimension();
 
   const {
     width: smallWidth,
     height: smallHeight,
     gap: smallGap,
-  } = getSmallImageDimension(width);
+  } = getSmallImageDimension();
 
   const imageOffsetLimit = getImageOffsetLimit(width);
   const scrollLimit = getDefaultScrollLimit(width);
@@ -282,6 +319,7 @@ const Scene = () => {
     [
       isBigScreen,
       isLandscape,
+      getDefaultScrollLimit,
       width,
       invalidate,
       defaultWidth,
