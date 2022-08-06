@@ -19,12 +19,12 @@ import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import { useMediaQuery } from "react-responsive";
-import { Power4, Circ } from "gsap";
+import { Power4 } from "gsap";
 import { CustomEase } from "gsap/CustomEase";
 
 gsap.registerPlugin(CustomEase);
 
-const Scene = ({ scrollPosRef }) => {
+const Scene = () => {
   const mounted = useRefMounted();
   const imagesRef = useRef();
   const { viewport, invalidate } = useThree();
@@ -201,21 +201,17 @@ const Scene = ({ scrollPosRef }) => {
               let j = 0;
               imagesRef.current.children.forEach((_, imgIndex) => {
                 if (imgIndex === activeImage) return;
-                tlRef.current
-                  .set(
-                    imagesPosRef.current[imgIndex],
-                    {
-                      targetX:
-                        imagesPosRef.current[activeImage].targetX +
-                        (imgIndex - activeImage) * (defaultWidth + defaultGap),
-                      targetY: 0,
-                      delay: j * DELAY_CONSTANT,
-                    },
-                    "start"
-                  )
-                  .set(imagesPosRef.current[imgIndex], {
-                    targetZ: 0,
-                  });
+                tlRef.current.set(
+                  imagesPosRef.current[imgIndex],
+                  {
+                    targetX:
+                      imagesPosRef.current[activeImage].targetX +
+                      (imgIndex - activeImage) * (defaultWidth + defaultGap),
+                    targetY: 0,
+                    delay: j * DELAY_CONSTANT,
+                  },
+                  "start"
+                );
                 j += 1;
               });
 
@@ -298,126 +294,39 @@ const Scene = ({ scrollPosRef }) => {
   );
 
   const resizeHandler = useCallback(() => {
-    tlRef.current.clear();
-    if (modeRef.current === "detail") {
-      //set position
-      imagesPosRef.current.forEach((item, index) => {
-        if (index === clickedImageRef.current) {
-          tlRef.current.set(
-            item,
-            {
-              targetX: 0,
-              targetY: 0,
-            },
-            "start"
-          );
-        } else {
-          tlRef.current.set(
-            item,
-            {
-              targetX:
-                width / 2 +
-                (index - 7.5) * (smallWidth + smallGap) -
-                SMALL_IMAGES_PADDING,
-              targetY: -height / 2 + smallHeight / 2 + SMALL_IMAGES_PADDING,
-            },
-            "start"
-          );
-        }
-      });
+    imagesPosRef.current.forEach((item, index) => {
+      item.targetX = index * (defaultWidth + defaultGap);
+      item.targetY = 0;
+    });
+    imagesRef.current.children.forEach((imgMesh, imgIndex) => {
+      imgMesh.scale.x = defaultWidth;
+      imgMesh.scale.y = defaultHeight;
+      imgMesh.material.uniforms.dimension.value = [
+        (defaultHeight / defaultWidth) *
+          (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+          (1 / DEFAULT_IMAGE_SCALE),
+        1 / DEFAULT_IMAGE_SCALE,
+      ];
 
-      imagesRef.current.children.forEach((imgMesh, imgIndex) => {
-        tlRef.current
-          .set(
-            imgMesh.scale,
-            {
-              x: imgIndex === clickedImageRef.current ? width : smallWidth,
-              y: imgIndex === clickedImageRef.current ? height : smallHeight,
-            },
-            "start"
-          )
-          .set(
-            imgMesh.material.uniforms.dimension.value,
-            {
-              endArray: [
-                (defaultHeight / defaultWidth) *
-                  (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height),
-                1,
-              ],
-            },
-            "start"
-          )
-          .set(imgMesh.material.uniforms.offset.value, {
-            endArray: [0, 0],
-          });
-      });
+      imgMesh.material.uniforms.offset.value = [
+        ((0.5 -
+          0.5 /
+            ((defaultHeight / defaultWidth) *
+              (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+              (1 / DEFAULT_IMAGE_SCALE))) *
+          imgIndex) /
+          (numImages - 1),
+        0,
+      ];
+    });
 
-      const defaultSmallPosX =
-        width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING;
-      minimapImagesRef.current.children.forEach((imgMesh, imgIndex) => {
-        tlRef.current.set(imgMesh.position, {
-          x: defaultSmallPosX + imgIndex * (smallWidth + smallGap),
-          y:
-            imgIndex === clickedImageRef.current
-              ? -height / 2 + smallHeight / 2 + SMALL_IMAGES_PADDING
-              : -height / 2 - smallHeight,
-        });
-      }, "start");
-    } else {
-      imagesPosRef.current.forEach((item, index) => {
-        tlRef.current.set(
-          item,
-          {
-            targetX: index * (defaultWidth + defaultGap),
-            targetY: 0,
-          },
-          "start"
-        );
-      });
-      imagesRef.current.children.forEach((imgMesh, imgIndex) => {
-        tlRef.current
-          .set(
-            imgMesh.scale,
-            {
-              x: defaultWidth,
-              y: defaultHeight,
-            },
-            "start"
-          )
-          .set(
-            imgMesh.material.uniforms.dimension.value,
-            {
-              endArray: [
-                (defaultHeight / defaultWidth) *
-                  (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
-                  (1 / DEFAULT_IMAGE_SCALE),
-                1 / DEFAULT_IMAGE_SCALE,
-              ],
-            },
-            "start"
-          )
-          .set(imgMesh.material.uniforms.offset.value, {
-            endArray: [
-              ((0.5 -
-                0.5 /
-                  ((defaultHeight / defaultWidth) *
-                    (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
-                    (1 / DEFAULT_IMAGE_SCALE))) *
-                imgIndex) /
-                (numImages - 1),
-              0,
-            ],
-          });
-      });
-      const defaultSmallPosX =
-        width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING;
-      minimapImagesRef.current.children.forEach((imgMesh, imgIndex) => {
-        tlRef.current.set(imgMesh.position, {
-          x: defaultSmallPosX + imgIndex * (smallWidth + smallGap),
-          y: -height / 2 - smallHeight,
-        });
-      }, "start");
-    }
+    const defaultSmallPosX =
+      width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING;
+    minimapImagesRef.current.children.forEach((imgMesh, imgIndex) => {
+      imgMesh.position.x =
+        defaultSmallPosX + imgIndex * (smallWidth + smallGap);
+      imgMesh.position.y = -height / 2 - smallHeight;
+    });
   }, [
     defaultGap,
     defaultHeight,
