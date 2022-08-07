@@ -154,10 +154,7 @@ const Scene = () => {
       if (!isBigScreen || !isLandscape) return;
       const { pixelX, pixelY } = normalizeWheel(e);
 
-      const relativeSpeed = Math.min(
-        100,
-        Math.max(Math.abs(pixelX), Math.abs(pixelY))
-      );
+      const relativeSpeed = Math.max(Math.abs(pixelX), Math.abs(pixelY));
 
       const scrollSpeed = relativeSpeed * 0.01;
       const scrollLimit = getDefaultScrollLimit(width);
