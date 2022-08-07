@@ -7,6 +7,7 @@ import {
   SMALL_IMAGE_WIDTH_RATIO,
   SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
   SMALL_IMAGE_GAP_RATIO,
+  SMALL_IMAGE_GAP,
 } from "utils/format";
 
 const MinimapImageBlock = ({ url, index }) => {
@@ -17,7 +18,7 @@ const MinimapImageBlock = ({ url, index }) => {
       width: width * SMALL_IMAGE_WIDTH_RATIO,
       height:
         (width * SMALL_IMAGE_WIDTH_RATIO) / SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
-      gap: width * SMALL_IMAGE_GAP_RATIO,
+      gap: SMALL_IMAGE_GAP,
     };
   }, [width]);
 

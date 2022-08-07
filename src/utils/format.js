@@ -19,7 +19,7 @@ export const IMAGES_ARR = [img1, img2, img3, img4, img5, img6, img7, img8];
 
 export const IMAGE_DIMENSION = {
   width: 2200,
-  height: 1080
+  height: 1080,
 };
 // export const IMAGE_DIMENSION = {
 //   width: 3440,
@@ -38,3 +38,5 @@ export const SMALL_IMAGE_GAP_RATIO = 0.003;
 export const SMALL_IMAGES_PADDING = 0.35;
 
 export const DELAY_CONSTANT = 0.055;
+export const DEFAULT_IMAGE_GAP = 0.22;
+export const SMALL_IMAGE_GAP = 0.03;

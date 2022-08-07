@@ -12,6 +12,8 @@ import {
   DEFAULT_IMAGE_WIDTH_RATIO,
   DEFAULT_IMAGE_GAP_RATIO,
   DEFAULT_IMAGE_WIDTH_HEIGHT_RATIO,
+  DEFAULT_IMAGE_GAP,
+  SMALL_IMAGE_GAP,
 } from "utils/format";
 import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
@@ -39,7 +41,7 @@ const Scene = () => {
       width: width * SMALL_IMAGE_WIDTH_RATIO,
       height:
         (width * SMALL_IMAGE_WIDTH_RATIO) / SMALL_IMAGE_WIDTH_HEIGHT_RATIO,
-      gap: width * SMALL_IMAGE_GAP_RATIO,
+      gap: SMALL_IMAGE_GAP,
     };
   }, [width]);
 
@@ -48,7 +50,7 @@ const Scene = () => {
       width: width * DEFAULT_IMAGE_WIDTH_RATIO,
       height:
         (width * DEFAULT_IMAGE_WIDTH_RATIO) / DEFAULT_IMAGE_WIDTH_HEIGHT_RATIO,
-      gap: width * DEFAULT_IMAGE_GAP_RATIO,
+      gap: DEFAULT_IMAGE_GAP,
     };
   }, [width]);
 
