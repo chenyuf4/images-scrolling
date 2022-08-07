@@ -22,32 +22,35 @@ const App = () => {
 
   return (
     <>
-      {(!isBigScreen || !isLandscape) && <MobilePage />}
       <Home />
-      <Canvas
-        dpr={Math.max(window.devicePixelRatio, 2)}
-        linear={true}
-        flat={true}
-        gl={{ antialias: true, alpha: true }}
-        onCreated={(state) => {
-          const { viewport } = state;
-          const { width, height } = viewport;
-          canvasSizeRef.current.width = width;
-          canvasSizeRef.current.height = height;
-        }}
-      >
-        <Suspense fallback={null}>
-          <PerspectiveCamera
-            makeDefault
-            position={[0, 0, 5]}
-            near={0.1}
-            far={100}
-            fov={75}
-          />
-          <color attach="background" args={["#141414"]} />
-          <Scene scrollPosRef={scrollPosRef} />
-        </Suspense>
-      </Canvas>
+      {isBigScreen && isLandscape ? (
+        <Canvas
+          dpr={Math.max(window.devicePixelRatio, 2)}
+          linear={true}
+          flat={true}
+          gl={{ antialias: true, alpha: true }}
+          onCreated={(state) => {
+            const { viewport } = state;
+            const { width, height } = viewport;
+            canvasSizeRef.current.width = width;
+            canvasSizeRef.current.height = height;
+          }}
+        >
+          <Suspense fallback={null}>
+            <PerspectiveCamera
+              makeDefault
+              position={[0, 0, 5]}
+              near={0.1}
+              far={100}
+              fov={75}
+            />
+            <color attach="background" args={["#141414"]} />
+            <Scene scrollPosRef={scrollPosRef} />
+          </Suspense>
+        </Canvas>
+      ) : (
+        <MobilePage />
+      )}
     </>
   );
 };
