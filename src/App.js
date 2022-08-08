@@ -19,7 +19,6 @@ const App = () => {
     <>
       <Home />
       <Canvas
-        frameloop="demand"
         dpr={Math.max(window.devicePixelRatio, 2)}
         linear={true}
         flat={true}

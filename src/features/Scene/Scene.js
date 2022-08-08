@@ -11,10 +11,12 @@ import {
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
+import * as THREE from "three";
+const { lerp } = THREE.MathUtils;
 const Scene = ({ scrollPosRef }) => {
   const mounted = useRefMounted();
   const imagesRef = useRef();
-  const { viewport, invalidate } = useThree();
+  const { viewport } = useThree();
   const { width, height } = viewport;
   const imageOffsetLimit = getImageOffsetLimit(width);
   const scrollLimit = getDefaultScrollLimit(width);
@@ -32,28 +34,26 @@ const Scene = ({ scrollPosRef }) => {
     gap: smallGap,
   } = getSmallImageDimension(width);
 
-  const tlRef = useRef(
-    gsap.timeline({
-      onUpdate: () => invalidate(),
-      onUpdateParams: () => invalidate(),
-      onStart: () => invalidate(),
-    })
-  );
+  const tlRef = useRef(gsap.timeline());
 
   const modeRef = useRef("list");
   const updatePlanes = useCallback(
     (deltaTimeValue) => {
-      const { current, target } = scrollPosRef.current;
-      let newCurrentPos = current + (target - current) * 5 * deltaTimeValue;
-      if (Math.abs(newCurrentPos - target) <= 0.001) {
-        newCurrentPos = target;
-      }
+      const { target } = scrollPosRef.current;
       const { width: defaultWidth, gap: defaultGap } =
         getDefaultImageDimension(width);
-      const scrollPercentage = Math.abs(current) / scrollLimit;
       imagesRef.current.children.forEach((item, index) => {
         const defaultPosition = index * (defaultWidth + defaultGap);
-        item.position.x = defaultPosition + newCurrentPos;
+        const scrollPercentage =
+          Math.abs(item.position.x - defaultPosition) / scrollLimit;
+        let newPosX =
+          item.position.x +
+          (defaultPosition + target - item.position.x) * 6 * deltaTimeValue;
+
+        if (Math.abs(defaultPosition + target - newPosX) <= 0.001) {
+          newPosX = defaultPosition + target;
+        }
+        item.position.x = newPosX;
 
         const defaultImageOffset = (imageOffsetLimit * index) / (numImages - 1);
         item.material.uniforms.offset.value = [
@@ -62,12 +62,9 @@ const Scene = ({ scrollPosRef }) => {
         ];
       });
 
-      scrollPosRef.current.current = newCurrentPos;
-      if (newCurrentPos !== target) {
-        invalidate();
-      }
+      // scrollPosRef.current.current = newCurrentPos;
     },
-    [invalidate, scrollPosRef, width, imageOffsetLimit, numImages, scrollLimit]
+    [scrollPosRef, width, scrollLimit, imageOffsetLimit, numImages]
   );
 
   // (smallHeight/larget, 1) => (defaultHeight, 0.8)
@@ -83,7 +80,6 @@ const Scene = ({ scrollPosRef }) => {
   const recoverImages = useCallback(
     (imgMesh, imgIndex) => {
       const tl = tlRef.current;
-      const defaultPosition = imgIndex * (defaultWidth + defaultGap);
       tl.to(
         imgMesh.scale,
         {
@@ -107,22 +103,12 @@ const Scene = ({ scrollPosRef }) => {
       ).to(
         imgMesh.position,
         {
-          x: defaultPosition + scrollPosRef.current.current,
           y: 0,
-          z: 0,
         },
         "start"
       );
     },
-    [
-      correctShaderDimensionFn,
-      defaultGap,
-      defaultHeight,
-      defaultWidth,
-      height,
-      scrollPosRef,
-      smallHeight,
-    ]
+    [correctShaderDimensionFn, defaultHeight, defaultWidth, height, smallHeight]
   );
 
   const onWheelHandler = useCallback(
@@ -139,10 +125,7 @@ const Scene = ({ scrollPosRef }) => {
         });
       }
 
-      const relativeSpeed = Math.min(
-        100,
-        Math.max(Math.abs(pixelX), Math.abs(pixelY))
-      );
+      const relativeSpeed = Math.max(Math.abs(pixelX), Math.abs(pixelY));
 
       const scrollSpeed = relativeSpeed * 0.01;
 
@@ -172,9 +155,8 @@ const Scene = ({ scrollPosRef }) => {
       const scrollLimit = getDefaultScrollLimit(width);
       target = Math.max(-scrollLimit, Math.min(0, target));
       scrollPosRef.current.target = target;
-      invalidate();
     },
-    [invalidate, recoverImages, scrollPosRef, width]
+    [recoverImages, scrollPosRef, width]
   );
 
   useEffect(() => {
@@ -185,11 +167,8 @@ const Scene = ({ scrollPosRef }) => {
   }, [onWheelHandler]);
 
   useFrame((_, delta) => {
-    if (
-      !mounted.current ||
-      scrollPosRef.current.current === scrollPosRef.current.target
-    )
-      return;
+    if (!mounted.current || modeRef.current === "detail") return;
+
     updatePlanes(delta);
   });
 
