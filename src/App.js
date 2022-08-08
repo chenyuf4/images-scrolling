@@ -7,6 +7,7 @@ import { useRef } from "react";
 import Home from "features/Home/Home";
 import { useMediaQuery } from "react-responsive";
 import MobilePage from "features/MobilePage/MobilePage";
+import { Stats } from "features/Stats/Stats";
 const App = () => {
   const scrollPosRef = useRef({
     current: 0,
@@ -26,6 +27,7 @@ const App = () => {
           legacy={true}
           gl={{ antialias: true, alpha: true }}
         >
+          {/* <Stats /> */}
           <Suspense fallback={null}>
             <PerspectiveCamera
               makeDefault

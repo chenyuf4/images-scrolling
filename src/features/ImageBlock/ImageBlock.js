@@ -16,6 +16,8 @@ import {
   DELAY_CONSTANT,
 } from "utils/format";
 import { Circ } from "gsap";
+import * as THREE from "three";
+const geo = new THREE.PlaneBufferGeometry(1, 1);
 const SCALE_DELAY_CONSTANT = 0.035;
 const ImageBlock = ({
   url,
@@ -171,9 +173,9 @@ const ImageBlock = ({
       ref={meshRef}
       position={[index * (defaultWidth + defaultGap), 0, 0]}
       scale={[defaultWidth, defaultHeight, 1]}
+      geometry={geo}
       onClick={onClickHandler}
     >
-      <planeBufferGeometry args={[1, 1, 128, 128]} />
       <imageShaderMaterial
         tex={imgTexture}
         index={index}
