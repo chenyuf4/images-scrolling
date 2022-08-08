@@ -7,7 +7,13 @@ import { useRef } from "react";
 import Home from "features/Home/Home";
 import { useMediaQuery } from "react-responsive";
 import MobilePage from "features/MobilePage/MobilePage";
-import { Stats } from "features/Stats/Stats";
+import Stats from "features/Stats/Stats";
+import {
+  BrowserRouter as Router,
+  Outlet,
+  Routes,
+  Route,
+} from "react-router-dom";
 const App = () => {
   const scrollPosRef = useRef({
     current: 0,
@@ -17,33 +23,44 @@ const App = () => {
   const isBigScreen = useMediaQuery({ query: "(min-width: 1224px)" });
   const isLandscape = useMediaQuery({ query: "(orientation: landscape)" });
   return (
-    <>
-      <Home />
-      {isBigScreen && isLandscape ? (
-        <Canvas
-          dpr={Math.max(window.devicePixelRatio, 2)}
-          linear={true}
-          flat={true}
-          legacy={true}
-          gl={{ antialias: true, alpha: true }}
+    <Router>
+      <Routes>
+        <Route
+          path=""
+          element={
+            <>
+              <Home />
+              <Outlet />
+              {isBigScreen && isLandscape ? (
+                <Canvas
+                  dpr={Math.max(window.devicePixelRatio, 2)}
+                  linear={true}
+                  flat={true}
+                  legacy={true}
+                  gl={{ antialias: true, alpha: true }}
+                >
+                  <Suspense fallback={null}>
+                    <PerspectiveCamera
+                      makeDefault
+                      position={[0, 0, 5]}
+                      near={0.1}
+                      far={100}
+                      fov={75}
+                    />
+                    <color attach="background" args={["#141414"]} />
+                    <Scene scrollPosRef={scrollPosRef} />
+                  </Suspense>
+                </Canvas>
+              ) : (
+                <MobilePage />
+              )}
+            </>
+          }
         >
-          {/* <Stats /> */}
-          <Suspense fallback={null}>
-            <PerspectiveCamera
-              makeDefault
-              position={[0, 0, 5]}
-              near={0.1}
-              far={100}
-              fov={75}
-            />
-            <color attach="background" args={["#141414"]} />
-            <Scene scrollPosRef={scrollPosRef} />
-          </Suspense>
-        </Canvas>
-      ) : (
-        <MobilePage />
-      )}
-    </>
+          <Route path="debug" element={<Stats />} />
+        </Route>
+      </Routes>
+    </Router>
   );
 };
 

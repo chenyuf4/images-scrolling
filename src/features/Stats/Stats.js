@@ -1,9 +1,9 @@
-import { useState, useEffect, RefObject } from "react";
-import { useFrame, addEffect, addAfterEffect } from "@react-three/fiber";
+import { useState, useEffect } from "react";
+import { addEffect, addAfterEffect } from "@react-three/fiber";
 // @ts-ignore
 import StatsImpl from "stats.js";
 
-export function Stats({ showPanel = 0, className, parent }) {
+const Stats = ({ showPanel = 0, className, parent }) => {
   const [stats] = useState(() => new StatsImpl());
   useEffect(() => {
     const node = (parent && parent.current) || document.body;
@@ -23,4 +23,6 @@ export function Stats({ showPanel = 0, className, parent }) {
     };
   }, [className, parent, showPanel, stats]);
   return null;
-}
+};
+
+export default Stats;
