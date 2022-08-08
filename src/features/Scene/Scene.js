@@ -1,5 +1,10 @@
 import ImageBlock from "features/ImageBlock/ImageBlock";
-import { IMAGES_ARR, IMAGE_DIMENSION, DEFAULT_IMAGE_SCALE } from "utils/format";
+import {
+  IMAGES_ARR,
+  IMAGE_DIMENSION,
+  DEFAULT_IMAGE_SCALE,
+  DELAY_CONSTANT,
+} from "utils/format";
 import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
 import {
@@ -12,6 +17,7 @@ import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import { Power4 } from "gsap";
+import { useMediaQuery } from "react-responsive";
 import * as THREE from "three";
 const { lerp } = THREE.MathUtils;
 const Scene = ({ scrollPosRef }) => {
@@ -23,6 +29,8 @@ const Scene = ({ scrollPosRef }) => {
   const scrollLimit = getDefaultScrollLimit(width);
   const numImages = IMAGES_ARR.length;
   const clickedImageRef = useRef(-1);
+  const isBigScreen = useMediaQuery({ query: "(min-width: 1224px)" });
+  const isLandscape = useMediaQuery({ query: "(orientation: landscape)" });
 
   const {
     width: defaultWidth,
@@ -87,7 +95,8 @@ const Scene = ({ scrollPosRef }) => {
   const recoverImages = useCallback(
     (imgMesh, imgIndex, activeImage, delayIndex) => {
       const tl = tlRef.current;
-      const delayValue = (activeImage === imgIndex ? 0 : delayIndex) * 0.04;
+      const delayValue =
+        (activeImage === imgIndex ? 0 : delayIndex) * DELAY_CONSTANT;
       tl.set(
         modeRef.current[imgIndex],
         { value: "list", delay: delayValue },
@@ -133,6 +142,7 @@ const Scene = ({ scrollPosRef }) => {
 
   const onWheelHandler = useCallback(
     (e) => {
+      if (!isBigScreen || !isLandscape) return;
       const { pixelX, pixelY } = normalizeWheel(e);
 
       // clear all animations and make all images return to original positions
@@ -179,7 +189,7 @@ const Scene = ({ scrollPosRef }) => {
       target = Math.max(-scrollLimit, Math.min(0, target));
       scrollPosRef.current.target = target;
     },
-    [recoverImages, scrollPosRef, width]
+    [isBigScreen, isLandscape, recoverImages, scrollPosRef, width]
   );
 
   useEffect(() => {

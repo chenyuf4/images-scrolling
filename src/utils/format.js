@@ -36,3 +36,5 @@ export const SMALL_IMAGE_WIDTH_HEIGHT_RATIO =
   IMAGE_DIMENSION.width / IMAGE_DIMENSION.height;
 export const SMALL_IMAGE_GAP_RATIO = 0.003;
 export const SMALL_IMAGES_PADDING = 0.35;
+
+export const DELAY_CONSTANT = 0.045;

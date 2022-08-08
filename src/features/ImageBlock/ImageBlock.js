@@ -13,9 +13,10 @@ import {
   IMAGE_DIMENSION,
   IMAGES_ARR,
   SMALL_IMAGES_PADDING,
+  DELAY_CONSTANT,
 } from "utils/format";
 import { Circ } from "gsap";
-
+const SCALE_DELAY_CONSTANT = 0.035;
 const ImageBlock = ({
   url,
   index,
@@ -69,6 +70,7 @@ const ImageBlock = ({
         y: 0,
         z: 0,
         ease: Circ.easeOut,
+        duration: 0.95,
         onUpdate: function () {
           const { x } = this.targets()[0];
           meshRef.current.material.uniforms.offset.value = [
@@ -83,6 +85,7 @@ const ImageBlock = ({
       {
         x: width,
         y: height,
+        duration: 0.95,
         ease: Circ.easeOut,
         onUpdate: function () {
           const { x, y } = this.targets()[0];
@@ -111,7 +114,7 @@ const ImageBlock = ({
         y: defaultSmallPosY,
         z: 0.001,
         ease: Circ.easeOut,
-        delay: (Math.abs(imgIndex - index) - 1) * 0.05,
+        delay: (Math.abs(imgIndex - index) - 1) * DELAY_CONSTANT,
       },
       "start"
     )
@@ -120,7 +123,7 @@ const ImageBlock = ({
         {
           endArray: [0, 0],
           ease: Circ.easeOut,
-          delay: (Math.abs(imgIndex - index) - 1) * 0.05,
+          delay: (Math.abs(imgIndex - index) - 1) * DELAY_CONSTANT,
         },
         "start"
       )
@@ -130,7 +133,7 @@ const ImageBlock = ({
           x: smallWidth,
           y: smallHeight,
           ease: Circ.easeOut,
-          delay: (Math.abs(imgIndex - index) - 1) * 0.05,
+          delay: (Math.abs(imgIndex - index) - 1) * SCALE_DELAY_CONSTANT,
           onUpdate: function () {
             const { x, y } = this.targets()[0];
             const correctScaleRatio = correctShaderDimensionFn(y, smallHeight);
