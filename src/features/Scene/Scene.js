@@ -18,8 +18,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import { Power4 } from "gsap";
 import { useMediaQuery } from "react-responsive";
-import * as THREE from "three";
-const { lerp } = THREE.MathUtils;
+
 const Scene = ({ scrollPosRef }) => {
   const mounted = useRefMounted();
   const imagesRef = useRef();
@@ -76,13 +75,10 @@ const Scene = ({ scrollPosRef }) => {
           0,
         ];
       });
-
-      // scrollPosRef.current.current = newCurrentPos;
     },
     [scrollPosRef, width, scrollLimit, imageOffsetLimit, numImages]
   );
 
-  // (smallHeight/larget, 1) => (defaultHeight, 0.8)
   const correctShaderDimensionFn = useCallback(
     (h, targetHeight) => {
       const a = (1 - 1 / DEFAULT_IMAGE_SCALE) / (targetHeight - defaultHeight);
@@ -150,6 +146,8 @@ const Scene = ({ scrollPosRef }) => {
         const tl = tlRef.current;
         tl.clear();
         const activeImage = clickedImageRef.current;
+        scrollPosRef.current.target =
+          -activeImage * (defaultWidth + defaultGap);
         let delayIndex = 0;
         imagesRef.current.children.forEach((imgMesh, imgIndex) => {
           recoverImages(imgMesh, imgIndex, activeImage, delayIndex);
@@ -189,8 +187,64 @@ const Scene = ({ scrollPosRef }) => {
       target = Math.max(-scrollLimit, Math.min(0, target));
       scrollPosRef.current.target = target;
     },
-    [isBigScreen, isLandscape, recoverImages, scrollPosRef, width]
+    [
+      defaultGap,
+      defaultWidth,
+      isBigScreen,
+      isLandscape,
+      recoverImages,
+      scrollPosRef,
+      width,
+    ]
   );
+
+  const resizeHandler = useCallback(() => {
+    if (clickedImageRef.current >= 0) {
+      scrollPosRef.current.target =
+        -clickedImageRef.current * (defaultWidth + defaultGap);
+      for (let i = 0; i < numImages; i++) {
+        modeRef.current[i].value = "list";
+      }
+      clickedImageRef.current = -1;
+    }
+    imagesRef.current.children.forEach((imgMesh, imgIndex) => {
+      const defaultPosX = imgIndex * (defaultWidth + defaultGap);
+      imgMesh.position.x = defaultPosX - scrollPosRef.current.target;
+      imgMesh.position.y = 0;
+      imgMesh.position.z = 0;
+      imgMesh.scale.x = defaultWidth;
+      imgMesh.scale.y = defaultHeight;
+      imgMesh.material.uniforms.dimension.value = [
+        (defaultHeight / defaultWidth) *
+          (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+          (1 / DEFAULT_IMAGE_SCALE),
+        1 / DEFAULT_IMAGE_SCALE,
+      ];
+      const scrollPercentage =
+        Math.abs(imgMesh.position.x - defaultPosX) / scrollLimit;
+      const defaultImageOffset =
+        (imageOffsetLimit * imgIndex) / (numImages - 1);
+      imgMesh.material.uniforms.offset.value = [
+        defaultImageOffset - scrollPercentage * imageOffsetLimit,
+        0,
+      ];
+    });
+  }, [
+    defaultGap,
+    defaultHeight,
+    defaultWidth,
+    imageOffsetLimit,
+    numImages,
+    scrollLimit,
+    scrollPosRef,
+  ]);
+
+  useEffect(() => {
+    window.addEventListener("resize", resizeHandler);
+    return () => {
+      window.removeEventListener("resize", resizeHandler);
+    };
+  }, [resizeHandler]);
 
   useEffect(() => {
     window.addEventListener("wheel", onWheelHandler);
