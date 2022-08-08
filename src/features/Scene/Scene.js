@@ -11,6 +11,7 @@ import {
 import normalizeWheel from "normalize-wheel";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
+import { Power4 } from "gsap";
 import * as THREE from "three";
 const { lerp } = THREE.MathUtils;
 const Scene = ({ scrollPosRef }) => {
@@ -21,6 +22,7 @@ const Scene = ({ scrollPosRef }) => {
   const imageOffsetLimit = getImageOffsetLimit(width);
   const scrollLimit = getDefaultScrollLimit(width);
   const numImages = IMAGES_ARR.length;
+  const clickedImageRef = useRef(-1);
 
   const {
     width: defaultWidth,
@@ -36,13 +38,18 @@ const Scene = ({ scrollPosRef }) => {
 
   const tlRef = useRef(gsap.timeline());
 
-  const modeRef = useRef("list");
+  const modeRef = useRef(
+    Array.from({ length: numImages }).map((_) => ({
+      value: "list",
+    }))
+  );
   const updatePlanes = useCallback(
     (deltaTimeValue) => {
       const { target } = scrollPosRef.current;
       const { width: defaultWidth, gap: defaultGap } =
         getDefaultImageDimension(width);
       imagesRef.current.children.forEach((item, index) => {
+        if (modeRef.current[index].value === "detail") return;
         const defaultPosition = index * (defaultWidth + defaultGap);
         const scrollPercentage =
           Math.abs(item.position.x - defaultPosition) / scrollLimit;
@@ -78,35 +85,48 @@ const Scene = ({ scrollPosRef }) => {
   );
 
   const recoverImages = useCallback(
-    (imgMesh, imgIndex) => {
+    (imgMesh, imgIndex, activeImage, delayIndex) => {
       const tl = tlRef.current;
-      tl.to(
-        imgMesh.scale,
-        {
-          x: defaultWidth,
-          y: defaultHeight,
-          onUpdate: function () {
-            const { x, y } = this.targets()[0];
-            const correctScaleRatio = correctShaderDimensionFn(
-              y,
-              y > defaultHeight ? height : smallHeight
-            );
-            imgMesh.material.uniforms.dimension.value = [
-              (y / x) *
-                (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+      const delayValue = (activeImage === imgIndex ? 0 : delayIndex) * 0.04;
+      tl.set(
+        modeRef.current[imgIndex],
+        { value: "list", delay: delayValue },
+        "start"
+      )
+        .to(
+          imgMesh.scale,
+          {
+            x: defaultWidth,
+            y: defaultHeight,
+            delay: delayValue,
+            duration: imgIndex === activeImage ? 1.1 : 0.6,
+            ease: Power4.easeOut,
+            onUpdate: function () {
+              const { x, y } = this.targets()[0];
+              const correctScaleRatio = correctShaderDimensionFn(
+                y,
+                y > defaultHeight ? height : smallHeight
+              );
+              imgMesh.material.uniforms.dimension.value = [
+                (y / x) *
+                  (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                  correctScaleRatio,
                 correctScaleRatio,
-              correctScaleRatio,
-            ];
+              ];
+            },
           },
-        },
-        "start"
-      ).to(
-        imgMesh.position,
-        {
-          y: 0,
-        },
-        "start"
-      );
+          "start"
+        )
+        .to(
+          imgMesh.position,
+          {
+            y: 0,
+            duration: imgIndex === activeImage ? 1.1 : 0.6,
+            delay: delayValue,
+            ease: Power4.easeOut,
+          },
+          "start"
+        );
     },
     [correctShaderDimensionFn, defaultHeight, defaultWidth, height, smallHeight]
   );
@@ -116,13 +136,16 @@ const Scene = ({ scrollPosRef }) => {
       const { pixelX, pixelY } = normalizeWheel(e);
 
       // clear all animations and make all images return to original positions
-      if (modeRef.current === "detail") {
-        modeRef.current = "list";
+      if (modeRef.current.every((item) => item.value === "detail")) {
         const tl = tlRef.current;
         tl.clear();
+        const activeImage = clickedImageRef.current;
+        let delayIndex = 0;
         imagesRef.current.children.forEach((imgMesh, imgIndex) => {
-          recoverImages(imgMesh, imgIndex);
+          recoverImages(imgMesh, imgIndex, activeImage, delayIndex);
+          if (imgIndex !== activeImage) delayIndex += 1;
         });
+        clickedImageRef.current = -1;
       }
 
       const relativeSpeed = Math.max(Math.abs(pixelX), Math.abs(pixelY));
@@ -167,7 +190,11 @@ const Scene = ({ scrollPosRef }) => {
   }, [onWheelHandler]);
 
   useFrame((_, delta) => {
-    if (!mounted.current || modeRef.current === "detail") return;
+    if (
+      !mounted.current ||
+      modeRef.current.every((item) => item.value === "detail")
+    )
+      return;
 
     updatePlanes(delta);
   });
@@ -184,6 +211,7 @@ const Scene = ({ scrollPosRef }) => {
             tlRef={tlRef}
             modeRef={modeRef}
             scrollPosRef={scrollPosRef}
+            clickedImageRef={clickedImageRef}
           />
         ))}
       </group>

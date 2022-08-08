@@ -14,6 +14,7 @@ import {
   IMAGES_ARR,
   SMALL_IMAGES_PADDING,
 } from "utils/format";
+import { Circ } from "gsap";
 
 const ImageBlock = ({
   url,
@@ -22,6 +23,7 @@ const ImageBlock = ({
   tlRef,
   modeRef,
   scrollPosRef,
+  clickedImageRef,
 }) => {
   const { viewport } = useThree();
   const [imgTexture] = useTexture([url]);
@@ -66,6 +68,7 @@ const ImageBlock = ({
         x: 0,
         y: 0,
         z: 0,
+        ease: Circ.easeOut,
         onUpdate: function () {
           const { x } = this.targets()[0];
           meshRef.current.material.uniforms.offset.value = [
@@ -80,6 +83,7 @@ const ImageBlock = ({
       {
         x: width,
         y: height,
+        ease: Circ.easeOut,
         onUpdate: function () {
           const { x, y } = this.targets()[0];
           const correctScaleRatio = correctShaderDimensionFn(y, height);
@@ -106,14 +110,16 @@ const ImageBlock = ({
         x: defaultSmallPosX + imgIndex * (smallWidth + smallGap),
         y: defaultSmallPosY,
         z: 0.001,
+        ease: Circ.easeOut,
         delay: (Math.abs(imgIndex - index) - 1) * 0.05,
       },
       "start"
     )
       .to(
-        imgMesh.material.uniforms.offset,
+        imgMesh.material.uniforms.offset.value,
         {
           endArray: [0, 0],
+          ease: Circ.easeOut,
           delay: (Math.abs(imgIndex - index) - 1) * 0.05,
         },
         "start"
@@ -123,6 +129,7 @@ const ImageBlock = ({
         {
           x: smallWidth,
           y: smallHeight,
+          ease: Circ.easeOut,
           delay: (Math.abs(imgIndex - index) - 1) * 0.05,
           onUpdate: function () {
             const { x, y } = this.targets()[0];
@@ -139,10 +146,11 @@ const ImageBlock = ({
       );
   };
   const onClickHandler = () => {
-    console.log(modeRef.current);
-    if (modeRef.current === "detail") return;
-    modeRef.current = "detail";
-    scrollPosRef.current.target = scrollPosRef.current.current;
+    if (modeRef.current.some((item) => item.value === "detail")) return;
+    for (let i = 0; i < modeRef.current.length; i++) {
+      modeRef.current[i].value = "detail";
+    }
+    clickedImageRef.current = index;
 
     const tl = tlRef.current;
     tl.clear(); // be careful about this one
