@@ -3,7 +3,7 @@ import {
   IMAGES_ARR,
   IMAGE_DIMENSION,
   DEFAULT_IMAGE_SCALE,
-  DELAY_CONSTANT,
+  SMALL_IMAGES_PADDING,
 } from "utils/format";
 import useRefMounted from "hooks/useRefMounted";
 import { useRef, useCallback, useEffect } from "react";
@@ -18,8 +18,11 @@ import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
 import { Power4 } from "gsap";
 import { useMediaQuery } from "react-responsive";
+import MinimapImageBlock from "features/MinimapImageBlock/MinimapImageBlock";
+import { Html } from "@react-three/drei";
 
-const Scene = ({ scrollPosRef }) => {
+const RECOVER_DELAY_CONSTANT = 0.055;
+const Scene = ({ scrollPosRef, imgTitleRef }) => {
   const mounted = useRefMounted();
   const imagesRef = useRef();
   const { viewport } = useThree();
@@ -30,7 +33,8 @@ const Scene = ({ scrollPosRef }) => {
   const clickedImageRef = useRef(-1);
   const isBigScreen = useMediaQuery({ query: "(min-width: 1224px)" });
   const isLandscape = useMediaQuery({ query: "(orientation: landscape)" });
-
+  const minimapImagesRef = useRef();
+  const wireframeBoxRef = useRef();
   const {
     width: defaultWidth,
     height: defaultHeight,
@@ -42,7 +46,7 @@ const Scene = ({ scrollPosRef }) => {
     height: smallHeight,
     gap: smallGap,
   } = getSmallImageDimension(width);
-
+  const wireframeRef = useRef();
   const tlRef = useRef(gsap.timeline());
 
   const modeRef = useRef(
@@ -92,7 +96,7 @@ const Scene = ({ scrollPosRef }) => {
     (imgMesh, imgIndex, activeImage, delayIndex) => {
       const tl = tlRef.current;
       const delayValue =
-        (activeImage === imgIndex ? 0 : delayIndex) * DELAY_CONSTANT;
+        (activeImage === imgIndex ? 0 : delayIndex) * RECOVER_DELAY_CONSTANT;
       tl.set(
         modeRef.current[imgIndex],
         { value: "list", delay: delayValue },
@@ -104,7 +108,7 @@ const Scene = ({ scrollPosRef }) => {
             x: defaultWidth,
             y: defaultHeight,
             delay: delayValue,
-            duration: imgIndex === activeImage ? 1.1 : 0.6,
+            duration: imgIndex === activeImage ? 1.1 : 0.75,
             ease: Power4.easeOut,
             onUpdate: function () {
               const { x, y } = this.targets()[0];
@@ -153,6 +157,36 @@ const Scene = ({ scrollPosRef }) => {
           recoverImages(imgMesh, imgIndex, activeImage, delayIndex);
           if (imgIndex !== activeImage) delayIndex += 1;
         });
+        // clear title
+        tl.to(
+          imgTitleRef.current,
+          {
+            transform: "translateY(-100%)",
+            duration: 0.55,
+            delay: 0.05,
+            ease: Power4.easeOut,
+          },
+          "start"
+        );
+
+        // recover minimap image
+        tl.to(
+          minimapImagesRef.current.children[activeImage].position,
+          {
+            y: -height / 2 - smallHeight,
+            duration: 0.9,
+            ease: Power4.easeOut,
+          },
+          "start"
+        ).to(
+          wireframeBoxRef.current,
+          {
+            opacity: 0,
+            duration: 0.3,
+            ease: Power4.easeOut,
+          },
+          "start"
+        );
         clickedImageRef.current = -1;
       }
 
@@ -190,10 +224,13 @@ const Scene = ({ scrollPosRef }) => {
     [
       defaultGap,
       defaultWidth,
+      height,
+      imgTitleRef,
       isBigScreen,
       isLandscape,
       recoverImages,
       scrollPosRef,
+      smallHeight,
       width,
     ]
   );
@@ -229,14 +266,32 @@ const Scene = ({ scrollPosRef }) => {
         0,
       ];
     });
+
+    // hide all minimap images
+    const defaultSmallPosX =
+      width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING;
+    minimapImagesRef.current.children.forEach((imgMesh, imgIndex) => {
+      imgMesh.position.x =
+        defaultSmallPosX + imgIndex * (smallWidth + smallGap);
+      imgMesh.position.y = -height / 2 - smallHeight;
+    });
+
+    wireframeBoxRef.current.style.opacity = 0;
+    imgTitleRef.current.style.transform = "translateY(100%)";
   }, [
     defaultGap,
     defaultHeight,
     defaultWidth,
+    height,
     imageOffsetLimit,
+    imgTitleRef,
     numImages,
     scrollLimit,
     scrollPosRef,
+    smallGap,
+    smallHeight,
+    smallWidth,
+    width,
   ]);
 
   useEffect(() => {
@@ -274,10 +329,43 @@ const Scene = ({ scrollPosRef }) => {
             imagesRef={imagesRef}
             tlRef={tlRef}
             modeRef={modeRef}
-            scrollPosRef={scrollPosRef}
             clickedImageRef={clickedImageRef}
+            minimapImagesRef={minimapImagesRef}
+            wireframeRef={wireframeRef}
+            imgTitleRef={imgTitleRef}
           />
         ))}
+      </group>
+      <group ref={minimapImagesRef}>
+        {IMAGES_ARR.map((url, index) => (
+          <MinimapImageBlock
+            url={url}
+            key={index}
+            index={index}
+            clickedImageRef={clickedImageRef}
+            modeRef={modeRef}
+            tlRef={tlRef}
+          />
+        ))}
+      </group>
+      <group
+        ref={wireframeRef}
+        position={[
+          width / 2 - 7.5 * (smallWidth + smallGap) - SMALL_IMAGES_PADDING,
+          -height / 2 + smallHeight / 2 + SMALL_IMAGES_PADDING,
+          0.002,
+        ]}
+      >
+        <Html transform occlude>
+          <div
+            ref={wireframeBoxRef}
+            className="wireframe-container"
+            style={{
+              width: `${smallWidth * 42}px`,
+              height: `${smallHeight * 42}px`,
+            }}
+          ></div>
+        </Html>
       </group>
     </>
   );

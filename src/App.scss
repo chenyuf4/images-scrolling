@@ -3,6 +3,11 @@
   src: url("static/fonts/s.ttf");
 }
 
+@font-face {
+  font-family: "c-font";
+  src: url("static/fonts/s.woff2") format("woff2");
+}
+
 html,
 body {
   overflow: hidden;
@@ -38,4 +43,13 @@ canvas {
 
 .s-font {
   font-family: "s-font";
+}
+
+.c-font {
+  font-family: "c-font";
+}
+
+.wireframe-container {
+  border: 0.1px solid #f4f4f4;
+  opacity: 0;
 }

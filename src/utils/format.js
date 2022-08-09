@@ -38,3 +38,13 @@ export const SMALL_IMAGE_GAP_RATIO = 0.003;
 export const SMALL_IMAGES_PADDING = 0.35;
 
 export const DELAY_CONSTANT = 0.045;
+export const IMAGE_TITLES = [
+  "The Regeneration Suite",
+  "Simplicity & Tactility",
+  "Reimagining Loyalty",
+  "Beyond The Canvas",
+  "Sound Expressed In Full",
+  "Reinventing Wonder",
+  "From Nature To Culture",
+  "From Gaggio With Love",
+];

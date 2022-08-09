@@ -14,8 +14,9 @@ import {
   IMAGES_ARR,
   SMALL_IMAGES_PADDING,
   DELAY_CONSTANT,
+  IMAGE_TITLES,
 } from "utils/format";
-import { Circ } from "gsap";
+import { Circ, Power4 } from "gsap";
 import * as THREE from "three";
 const geo = new THREE.PlaneBufferGeometry(1, 1);
 const SCALE_DELAY_CONSTANT = 0.035;
@@ -25,8 +26,10 @@ const ImageBlock = ({
   imagesRef,
   tlRef,
   modeRef,
-  scrollPosRef,
   clickedImageRef,
+  minimapImagesRef,
+  wireframeRef,
+  imgTitleRef,
 }) => {
   const { viewport } = useThree();
   const [imgTexture] = useTexture([url]);
@@ -82,26 +85,40 @@ const ImageBlock = ({
         },
       },
       "start"
-    ).to(
-      meshRef.current.scale,
-      {
-        x: width,
-        y: height,
-        duration: 0.95,
-        ease: Circ.easeOut,
-        onUpdate: function () {
-          const { x, y } = this.targets()[0];
-          const correctScaleRatio = correctShaderDimensionFn(y, height);
-          meshRef.current.material.uniforms.dimension.value = [
-            (y / x) *
-              (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+    )
+      .to(
+        meshRef.current.scale,
+        {
+          x: width,
+          y: height,
+          duration: 0.95,
+          ease: Circ.easeOut,
+          onUpdate: function () {
+            const { x, y } = this.targets()[0];
+            const correctScaleRatio = correctShaderDimensionFn(y, height);
+            meshRef.current.material.uniforms.dimension.value = [
+              (y / x) *
+                (IMAGE_DIMENSION.width / IMAGE_DIMENSION.height) *
+                correctScaleRatio,
               correctScaleRatio,
-            correctScaleRatio,
-          ];
+            ];
+          },
         },
-      },
-      "start"
-    );
+        "start"
+      )
+      .fromTo(
+        imgTitleRef.current,
+        {
+          transform: "translateY(100%)",
+        },
+        {
+          transform: "translateY(0%)",
+          delay: 0.2,
+          duration: 0.8,
+          ease: Power4.easeOut,
+        },
+        "start"
+      );
   };
 
   const updateSideImages = (tl, imgMesh, imgIndex) => {
@@ -156,7 +173,7 @@ const ImageBlock = ({
       modeRef.current[i].value = "detail";
     }
     clickedImageRef.current = index;
-
+    imgTitleRef.current.innerHTML = IMAGE_TITLES[index];
     const tl = tlRef.current;
     tl.clear(); // be careful about this one
     imagesRef.current.children.forEach((imgMesh, imgIndex) => {
@@ -166,6 +183,39 @@ const ImageBlock = ({
         updateSideImages(tl, imgMesh, imgIndex);
       }
     });
+
+    // move minimap images block
+    const targetMinimapBlock = minimapImagesRef.current.children[index];
+    tlRef.current
+      .to(
+        targetMinimapBlock.position,
+        {
+          y: -height / 2 + smallHeight / 2 + SMALL_IMAGES_PADDING,
+          duration: 1.1,
+          ease: Power4.easeOut,
+        },
+        "start"
+      )
+      .set(
+        wireframeRef.current.position,
+        {
+          x:
+            width / 2 +
+            (index - 7.5) * (smallWidth + smallGap) -
+            SMALL_IMAGES_PADDING,
+        },
+        "start"
+      )
+      .to(
+        ".wireframe-container",
+        {
+          opacity: 1,
+          delay: 0.4,
+          duration: 0.7,
+          ease: Power4.easeOut,
+        },
+        "start"
+      );
   };
 
   return (

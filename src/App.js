@@ -14,6 +14,7 @@ import {
   Routes,
   Route,
 } from "react-router-dom";
+import ImageTitle from "features/ImageTitle/ImageTitle";
 const App = () => {
   const scrollPosRef = useRef({
     current: 0,
@@ -22,35 +23,42 @@ const App = () => {
 
   const isBigScreen = useMediaQuery({ query: "(min-width: 1224px)" });
   const isLandscape = useMediaQuery({ query: "(orientation: landscape)" });
+  const imgTitleRef = useRef();
   return (
     <Router>
       <Routes>
         <Route
-          path=""
+          path="/"
           element={
             <>
               <Home />
               <Outlet />
               {isBigScreen && isLandscape ? (
-                <Canvas
-                  dpr={Math.max(window.devicePixelRatio, 2)}
-                  linear={true}
-                  flat={true}
-                  legacy={true}
-                  gl={{ antialias: true, alpha: true }}
-                >
-                  <Suspense fallback={null}>
-                    <PerspectiveCamera
-                      makeDefault
-                      position={[0, 0, 5]}
-                      near={0.1}
-                      far={100}
-                      fov={75}
-                    />
-                    <color attach="background" args={["#141414"]} />
-                    <Scene scrollPosRef={scrollPosRef} />
-                  </Suspense>
-                </Canvas>
+                <>
+                  <Canvas
+                    dpr={Math.max(window.devicePixelRatio, 2)}
+                    linear={true}
+                    flat={true}
+                    legacy={true}
+                    gl={{ antialias: true, alpha: true }}
+                  >
+                    <Suspense fallback={null}>
+                      <PerspectiveCamera
+                        makeDefault
+                        position={[0, 0, 5]}
+                        near={0.1}
+                        far={100}
+                        fov={75}
+                      />
+                      <color attach="background" args={["#141414"]} />
+                      <Scene
+                        imgTitleRef={imgTitleRef}
+                        scrollPosRef={scrollPosRef}
+                      />
+                    </Suspense>
+                  </Canvas>
+                  <ImageTitle imgTitleRef={imgTitleRef} />
+                </>
               ) : (
                 <MobilePage />
               )}
